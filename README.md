@@ -1,4 +1,4 @@
-Part A and B of our second Distributed Computing project. Our task is to create a bank data web service in ASP.NET MVC Core that uses SQLite to store data locally.
+Part B of our second Distributed Computing project. Our task is to create a bank data web service in ASP.NET MVC Core that uses SQLite to store data locally.
 ## Profiles
 Use this JSON to test profile CRUD operations:
 ```
