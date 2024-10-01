@@ -441,7 +441,14 @@ namespace DatabaseLib
         private string LoadConnectionString(string id = "DefaultConnection")
         {
             var connectionString = _configuration.GetConnectionString(id);
-            return connectionString.Replace("Data Source=.\\BankDB.db", $"Data Source={_dbPath}");
+            if (String.IsNullOrEmpty(_dbPath))
+            {
+                return connectionString;
+            }
+            else
+            {
+                return connectionString.Replace("Data Source=.\\BankDB.db", $"Data Source={_dbPath}");
+            }
         }
     }
 }
