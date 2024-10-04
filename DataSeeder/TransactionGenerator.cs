@@ -41,9 +41,7 @@ namespace DataSeeder
             {
                 var account = accounts[random.Next(accounts.Count)];
                 int acctNum = account.account_number;
-                double amount = random.Next(1, (int)Math.Floor(account.balance)); 
-                // cannot withdraw more than the account's balance!!!
-                // also needs to round down the limit to ensure this.
+                double amount = random.Next(1, 1000); 
 
                 var deposit = new Transaction
                 {
