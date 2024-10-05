@@ -15,8 +15,4 @@
     <ProjectReference Include="..\DatabaseLib\DatabaseLib.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Views\Admin\" />
-  </ItemGroup>
-
 </Project>
