@@ -12,6 +12,7 @@
         <h1 class="display-4">Welcome to Admin Dashboard</h1>
         <p>Please log in to access your account.</p>
 
+        @* When form is submitted, admin auth from LoginController will be called to validate login. *@
         <form method="post" asp-controller="Login" asp-action="AdminAuth" class="form-signin">
             <div class="form-group">
                 <label for="username">Username/Email</label>
@@ -23,9 +24,11 @@
             </div>
             <button type="submit" class="btn btn-primary">Log In</button>
             
+            @* Error Handling Code - if username/password is invalid *@
             @if (!ViewData.ModelState.IsValid)
             {
                 <div class="text-danger">
+                    @* For loop to prevent null values from being referenced *@
                     @foreach (var entry in ViewData.ModelState)
                     {
                         foreach (var error in entry.Value.Errors)
