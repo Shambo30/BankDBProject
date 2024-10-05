@@ -12,7 +12,7 @@
         <h1 class="display-4">Welcome to Admin Dashboard</h1>
         <p>Please log in to access your account.</p>
 
-        <form method="post" asp-controller="Admin" asp-action="Dashboard" class="form-signin">
+        <form method="post" asp-controller="Login" asp-action="AdminAuth" class="form-signin">
             <div class="form-group">
                 <label for="username">Username/Email</label>
                 <input type="text" class="form-control" id="username" name="username" required />
@@ -22,6 +22,20 @@
                 <input type="password" class="form-control" id="password" name="password" required />
             </div>
             <button type="submit" class="btn btn-primary">Log In</button>
+            
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="text-danger">
+                    @foreach (var entry in ViewData.ModelState)
+                    {
+                        foreach (var error in entry.Value.Errors)
+                        {
+                            <div>@error.ErrorMessage</div>
+                        }
+                    }
+                </div>
+            }
+
         </form>
     </div>
 </body>
