@@ -1,7 +1,86 @@
 ﻿@{
     ViewData["Title"] = "Admin Dashboard";
 }
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    @* Margin-top 5 (high spacing *@
+    <div class="container mt-5">
+        <h1>Admin Dashboard</h1>
+        @* Margin-bottom 4 (high, but little bit less spacing) *@
+        <div class="section mb-4">
+            <h2>Admin Profile Information</h2>
 
-<div class="text-center">
-    <h1 class="display-4">Logged in to Admin Dashboard</h1>
-</div>
+            @* Full screen flex box; align items in it to the center *@
+            <div class="d-flex align-items-center">
+                <div>
+                    <h3>Admin Name</h3>
+                    <p>Email: <a href="mailto:admin@example.com">admin@example.com</a></p>
+                    <p>Phone: (123) 456-7890</p>
+                    @* btn-primary provides the colour of the button *@
+                    <button class="btn btn-primary">Update Personal Details</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section mb-4">
+            <h2>User Management</h2>
+            <div class="form-group">
+                <label for="user-search">Search Users:</label>
+                <input type="text" id="user-search" class="form-control" placeholder="Search by profile username...">
+            </div>
+            <button class="btn btn-success mb-3">Create User Profile</button>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Password</th>
+                        <th>Address</th>
+                        <th>Phone</th>
+                        <th>Picture</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Javascript injects code here -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section mb-4">
+            <h2>Transaction Management</h2>
+            <div class="form-group">
+                <label for="transaction-search">Search Transactions:</label>
+                <input type="text" id="transaction-search" class="form-control" placeholder="Search by ID...">
+            </div>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Transaction ID</th>
+                        <th>User ID</th>
+                        <th>Date</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Javascript injects code here -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section mb-4">
+            <h2>Security and Access Control</h2>
+            <p>Logs and audit trails for tracking admin activities and system changes will be displayed here.</p>
+            <button class="btn btn-info">View Logs</button>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
