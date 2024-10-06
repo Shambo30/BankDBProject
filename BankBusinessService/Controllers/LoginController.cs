@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace BankWebService.Controllers
+namespace BankBusinessService.Controllers
 {
     public class LoginController : Controller
     {
@@ -21,7 +21,7 @@ namespace BankWebService.Controllers
             {
                 // dynamic cookie generator
                 // GUID = Globally Unique ID.
-                var sessionId = Guid.NewGuid().ToString(); 
+                var sessionId = Guid.NewGuid().ToString();
                 Response.Cookies.Append("SessionID", sessionId, new CookieOptions
                 {
                     HttpOnly = true, // Helps mitigate XSS attacks
@@ -42,7 +42,7 @@ namespace BankWebService.Controllers
         public IActionResult UserAuth(string id, string password)
         {
             // Profile profile = JsonConvert<Profile>(ProfileController.GetProfile(id)) - might not be the exact code... 
-            
+
             if (id == "admin" && password == "admin") // basic, one account check.
             // if (profile != null && id == Profile.id && password == Profile.password)
             {
