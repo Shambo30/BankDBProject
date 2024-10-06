@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace BankWebService.Controllers
+namespace BankBusinessService.Controllers
 {
     public class UserController : Controller
     {

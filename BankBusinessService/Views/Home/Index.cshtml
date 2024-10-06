@@ -3,6 +3,11 @@
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <h1 class="display-4">Welcome to Bank Web Service</h1>
+    <p>Please choose your login type:</p>
+
+    <div class="d-flex justify-content-center">
+        <a href="@Url.Action("UserLogin", "Login")" class="btn btn-primary btn-lg m-2">User Login</a>
+        <a href="@Url.Action("AdminLogin", "Login")" class="btn btn-secondary btn-lg m-2">Admin Login</a>
+    </div>
 </div>
