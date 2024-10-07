@@ -97,5 +97,12 @@ namespace BankBusinessService.Controllers
             Console.WriteLine("User or password is incorrect.");
             return View("UserLogin");
         }
+
+        [HttpPost]
+        public IActionResult UserLogout()
+        {
+            HttpContext.Session.Clear(); // Clear the session
+            return RedirectToAction("UserLogin", "Login");
+        }
     }
 }
