@@ -17,7 +17,7 @@
 
         <!-- User Profile Information -->
         <div class="section mb-4">
-            <h2>Welcome, @Model.UserProfile.Name!</h2>
+            <h2>Welcome, @Model.UserProfile.Username!</h2>
             <div class="d-flex align-items-center">
                 <div class="ml-3">
                     <h3>@Model.UserProfile.Name</h3>
@@ -32,7 +32,7 @@
         <!-- Account Summary -->
         <div class="section mb-4">
             <h2>Your Accounts</h2>
-            <table class="table table-bordered">
+            <table class="table table-bordered" id="accountSummaryTable">
                 <thead>
                     <tr>
                         <th>Account Number</th>
@@ -71,32 +71,31 @@
             <button class="btn btn-info mt-3">Filter Transactions</button>
         </div>
 
-<!-- Money Transfer -->
-<div class="section mb-4">
-    <h2>Money Transfer</h2>
-    <form id="moneyTransferForm">
-        <div class="form-group">
-            <label for="sender-account">Select Account to Transfer From:</label>
-            <select id="sender-account" class="form-control" required>
-                <option value="">Select your account</option>
+        <!-- Money Transfer -->
+        <div class="section mb-4">
+            <h2>Money Transfer</h2>
+            <form id="moneyTransferForm">
+                <div class="form-group">
+                    <label for="sender-account">Select Account to Transfer From:</label>
+                    <select id="sender-account" class="form-control" required>
+                        <option value="">Select your account</option>
                         @foreach (var account in Model.UserAccounts)
                         {
-                        <option value="@account.account_number">Account: @account.account_number - Balance: @account.balance</option>
+                            <option value="@account.account_number">Account: @account.account_number - Balance: @account.balance</option>
                         }
-            </select>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="recipient-account">Recipient Account Number:</label>
+                    <input type="text" id="recipient-account" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="transfer-amount">Amount:</label>
+                    <input type="number" id="transfer-amount" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-success">Initiate Transfer</button>
+            </form>
         </div>
-        <div class="form-group">
-            <label for="recipient-account">Recipient Account Number:</label>
-            <input type="text" id="recipient-account" class="form-control" required>
-        </div>
-        <div class="form-group">
-            <label for="transfer-amount">Amount:</label>
-            <input type="number" id="transfer-amount" class="form-control" required>
-        </div>
-        <button type="submit" class="btn btn-success">Initiate Transfer</button>
-    </form>
-</div>
-
 
         <!-- Security Features -->
         <div class="section mb-4">
@@ -133,7 +132,7 @@
                 success: function (response) {
                     alert('Transfer successful!');
                     // Refresh account balances after the transfer
-                    refreshAccountBalances();
+                    refreshAccountBalances(`@Model.UserProfile.Username`);
                 },
                 error: function (xhr) {
                     let errorMessage = xhr.responseText || 'An error occurred during the transfer.';
@@ -146,21 +145,36 @@
                     alert('Error in transfer: ' + errorMessage);
                 }
             });
+        });
 
-        function refreshAccountBalances() {
+        function refreshAccountBalances(username) {
             $.ajax({
-                url: '/User/GetUserAccounts', // Assuming this endpoint returns all user accounts
+                url: `/api/BAccount/retrieveByUsername/${username}`,
                 method: 'GET',
                 success: function (data) {
-                    let accountTable = $('table tbody');
+                    let accountTable = $('#accountSummaryTable tbody');
+                    let senderAccountSelect = $('#sender-account');
+
+                    // Clear the existing table rows and select options
                     accountTable.empty();
+                    senderAccountSelect.empty();
+
+                    // Append the default option for the select
+                    senderAccountSelect.append('<option value="">Select your account</option>');
+
                     data.forEach(account => {
+                        // Append rows to the account summary table
                         accountTable.append(`
                             <tr>
                                 <td>${account.account_number}</td>
                                 <td>${account.balance}</td>
                                 <td><button class="btn btn-secondary" onclick="viewTransactionHistory(${account.account_number})">View Transaction History</button></td>
                             </tr>
+                        `);
+
+                        // Append options to the sender account select
+                        senderAccountSelect.append(`
+                            <option value="${account.account_number}">Account: ${account.account_number} - Balance: ${account.balance}</option>
                         `);
                     });
                 },
@@ -169,7 +183,6 @@
                 }
             });
         }
-
 
 
         // AJAX request to view transaction history
@@ -193,16 +206,14 @@
             transactions.forEach(transaction => {
                 const formattedDate = new Date(transaction.transaction_date).toLocaleString(); // Formats the date to a more readable format
                 transactionTable.append(`
-                    <tr>
-                        <td>${formattedDate}</td>
-                        <td>${transaction.transaction_id}</td>
-                        <td>${transaction.amount}</td>
-                    </tr>
-                `);
+                        <tr>
+                            <td>${formattedDate}</td>
+                            <td>${transaction.transaction_id}</td>
+                            <td>${transaction.amount}</td>
+                        </tr>
+                    `);
             });
         }
-
-
 
         // Logout function
         function logout() {
@@ -210,5 +221,6 @@
             console.log('Logging out...');
         }
     </script>
+
 </body>
 </html>
