@@ -26,33 +26,69 @@ namespace BankBusinessService.Controllers
 
         // called when admin login is authenticated
         [HttpPost]
-        public IActionResult AdminAuth(string username, string password)
+        public async Task<IActionResult> AdminAuth(string username, string password)
         {
-            if (username == "admin" && password == "admin") // basic, one account check.
+            Console.WriteLine($"[LoginController] Attempting login for admin");
+            string errorMsg = string.Empty;
+            // first step: check if username is admin (i.e. privileges of account)
+            if (username.Equals("admin"))
             {
-                // dynamic cookie generator
-                // GUID = Globally Unique ID.
-                var sessionId = Guid.NewGuid().ToString();
-                Response.Cookies.Append("SessionID", sessionId, new CookieOptions
-                {
-                    HttpOnly = true, // Helps mitigate XSS attacks
-                    Secure = true, // Ensures the cookie is only sent over HTTPS
-                    SameSite = SameSiteMode.Strict // Protects against CSRF attacks
-                });
+                // Retrieve the user profile using BProfileController
+                var response = await _bProfileController.RetrieveProfileByUsername(username); // Call to BProfileController to fetch user profile
 
-                return RedirectToAction("Dashboard", "Admin");
+                if (response is OkObjectResult okResult && okResult.Value is Profile profile)
+                {
+                    Console.WriteLine($"Profile found for username: {profile.Username}");
+
+                    // Validate the password against the retrieved profile
+                    if (profile.Password == password)
+                    {
+                        Console.WriteLine("Password is correct. Setting session and redirecting to dashboard.");
+                        // Store the username in session for later use
+                        HttpContext.Session.SetString("Username", profile.Username);
+                        Console.WriteLine($"Username {profile.Username} stored in session.");
+
+                        var sessionId = Guid.NewGuid().ToString();
+                        Response.Cookies.Append("SessionID", sessionId, new CookieOptions
+                        {
+                            HttpOnly = true, // Helps mitigate XSS attacks
+                            Secure = true, // Ensures the cookie is only sent over HTTPS
+                            SameSite = SameSiteMode.Strict // Protects against CSRF attacks
+                        });
+
+                        // Redirect to UserController's Dashboard with all necessary data in session
+                        return RedirectToAction("Dashboard", "Admin");
+                    }
+                    else
+                    {
+                        errorMsg = "Password does not match with stored user password.";
+                        Console.WriteLine(errorMsg);
+                    }
+                }
+                else
+                {
+                    errorMsg = "Admin profile not found in database";
+                    Console.WriteLine(errorMsg);
+                }
+            }
+            else
+            {
+                errorMsg = "Admin profile not selected";
+                Console.WriteLine(errorMsg);
             }
 
             // If invalid:
-            ModelState.AddModelError("", "Invalid username or password.");
+            ModelState.AddModelError("", $"Invalid login: {errorMsg}");
+            Console.WriteLine("Login attempt invalid");
             return View("AdminLogin");
         }
+
 
         // called when user login is authenticated
         [HttpPost]
         public async Task<IActionResult> UserAuth(string username, string password)
         {
-            // Profile profile = JsonConvert<Profile>(ProfileController.GetProfile(id)) - might not be the exact code... 
+            string errorMsg = string.Empty;
             Console.WriteLine($"[LoginController] Attempting login for username: {username} with password: {password}");
             // Retrieve the user profile using BProfileController
             var response = await _bProfileController.RetrieveProfileByUsername(username); // Call to BProfileController to fetch user profile
@@ -60,41 +96,49 @@ namespace BankBusinessService.Controllers
             if (response is OkObjectResult okResult && okResult.Value is Profile profile)
             {
                 Console.WriteLine($"Profile found for username: {profile.Username}");
-                //if (id == "admin" && password == "admin") // basic, one account check.
-                //if (profile != null && id == Profile.id && password == Profile.password)
-
-                // Validate the password against the retrieved profile
-                if (profile.Password == password)
+                // Check if not admin
+                if (!profile.Username.Equals("admin")) 
                 {
-                    Console.WriteLine("Password is correct. Setting session and redirecting to dashboard.");
-                    // Store the username in session for later use
-                    HttpContext.Session.SetString("Username", profile.Username);
-                    Console.WriteLine($"Username {profile.Username} stored in session.");
-
-                    var sessionId = Guid.NewGuid().ToString();
-                    Response.Cookies.Append("SessionID", sessionId, new CookieOptions
+                    // Validate the password against the retrieved profile
+                    if (profile.Password == password)
                     {
-                        HttpOnly = true, // Helps mitigate XSS attacks
-                        Secure = true, // Ensures the cookie is only sent over HTTPS
-                        SameSite = SameSiteMode.Strict // Protects against CSRF attacks
-                    });
+                        Console.WriteLine("Password is correct. Setting session and redirecting to dashboard.");
+                        // Store the username in session for later use
+                        HttpContext.Session.SetString("Username", profile.Username);
+                        Console.WriteLine($"Username {profile.Username} stored in session.");
 
-                    // Redirect to UserController's Dashboard with all necessary data in session
-                    return RedirectToAction("Dashboard", "User");
+                        var sessionId = Guid.NewGuid().ToString();
+                        Response.Cookies.Append("SessionID", sessionId, new CookieOptions
+                        {
+                            HttpOnly = true, // Helps mitigate XSS attacks
+                            Secure = true, // Ensures the cookie is only sent over HTTPS
+                            SameSite = SameSiteMode.Strict // Protects against CSRF attacks
+                        });
+
+                        // Redirect to UserController's Dashboard with all necessary data in session
+                        return RedirectToAction("Dashboard", "User");
+                    }
+                    else
+                    {
+                        errorMsg = "Password does not match with stored user password.";
+                        Console.WriteLine(errorMsg);
+                    }
                 }
-                else
+                else 
                 {
-                    Console.WriteLine("Password does not match.");
+                    errorMsg = "Admin account cannot login to user page.";
+                    Console.WriteLine(errorMsg);
                 }
             }
             else
             {
-                Console.WriteLine("Profile not found for the provided username.");
+                errorMsg = "Profile not found for the provided username.";
+                Console.WriteLine(errorMsg);
             }
 
             // If invalid:
-            ModelState.AddModelError("", "Invalid account ID or password.");
-            Console.WriteLine("User or password is incorrect.");
+            ModelState.AddModelError("", $"Invalid login: {errorMsg}");
+            Console.WriteLine("Login attempt invalid");
             return View("UserLogin");
         }
 
