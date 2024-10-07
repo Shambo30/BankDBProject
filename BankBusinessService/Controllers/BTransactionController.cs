@@ -26,7 +26,7 @@ namespace BankBusinessService.Controllers
                 restRequest.AddJsonBody(request);
 
                 var response = await _client.ExecuteAsync(restRequest);
-                _logger.LogInformation($"Processing deposit of {request.Amount} into account {request.AccountNumber}");
+                _logger.LogInformation($"Processing deposit of {request.Amount} into account {request.RecipientAccount}");
 
                 return Ok(response.Content);
             }
@@ -46,7 +46,7 @@ namespace BankBusinessService.Controllers
                 restRequest.AddJsonBody(request);
 
                 var response = await _client.ExecuteAsync(restRequest);
-                _logger.LogInformation($"Processing withdrawal of {request.Amount} from account {request.AccountNumber}");
+                _logger.LogInformation($"Processing withdrawal of {request.Amount} from account {request.SenderAccount}");
 
                 return Ok(response.Content);
             }
@@ -84,6 +84,53 @@ namespace BankBusinessService.Controllers
             }
         }
 
-    }
+        [HttpPost("transfer")]
+        public async Task<IActionResult> TransferFunds([FromBody] TransactionRequest transactionRequest)
+        {
+            try
+            {
+                // Check if the sender's account has sufficient funds
+                var senderAccountResponse = await _client.ExecuteAsync(new RestRequest($"account/retrieve/{transactionRequest.SenderAccount}", Method.Get));
+                var senderAccount = JsonConvert.DeserializeObject<Account>(senderAccountResponse.Content);
 
+                if (senderAccount.balance < transactionRequest.Amount)
+                {
+                    _logger.LogInformation($"Transfer failed: Insufficient funds in sender account {transactionRequest.SenderAccount}");
+                    return BadRequest("Insufficient funds in the sender's account.");
+                }
+
+                // Check if the recipient's account exists
+                var recipientAccountResponse = await _client.ExecuteAsync(new RestRequest($"account/retrieve/{transactionRequest.RecipientAccount}", Method.Get));
+                var recipientAccount = JsonConvert.DeserializeObject<Account>(recipientAccountResponse.Content);
+
+                if (recipientAccount == null)
+                {
+                    _logger.LogInformation($"Transfer failed: Invalid recipient account {transactionRequest.RecipientAccount}");
+                    return BadRequest("Invalid recipient account.");
+                }
+
+                // Withdraw the amount from the sender's account
+                var withdrawResponse = await Withdraw(new TransactionRequest
+                {
+                    SenderAccount = transactionRequest.SenderAccount,
+                    Amount = transactionRequest.Amount
+                });
+
+                // Deposit the amount into the recipient's account
+                var depositResponse = await Deposit(new TransactionRequest
+                {
+                    RecipientAccount = transactionRequest.RecipientAccount,
+                    Amount = transactionRequest.Amount
+                });
+
+                _logger.LogInformation($"Successfully transferred {transactionRequest.Amount} from account {transactionRequest.SenderAccount} to account {transactionRequest.RecipientAccount}");
+                return Ok("Transfer successful!");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing money transfer");
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+    }
 }

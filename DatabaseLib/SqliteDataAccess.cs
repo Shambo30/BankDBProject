@@ -251,6 +251,30 @@ namespace DatabaseLib
             }
         }
 
+        public List<Account> GetAccountsByUsername(string username)
+        {
+            try
+            {
+                using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+                {
+                    // Query to get all accounts associated with the given username
+                    return cnn.Query<Account>(
+                        "SELECT * FROM accounts WHERE holder_username = @holder_username",
+                        new { holder_username = username }).ToList();
+                }
+            }
+            catch (SQLiteException ex)
+            {
+                Console.WriteLine($"SQLite error occurred: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving accounts: {ex.Message}");
+                throw;
+            }
+        }
+
 
         public void UpdateAccount(Account account)
         {

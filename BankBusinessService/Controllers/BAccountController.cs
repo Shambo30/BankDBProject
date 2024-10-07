@@ -62,6 +62,35 @@ public class BAccountController : Controller
         }
     }
 
+    // Retrieve account details by username through the data layer
+    [HttpGet("retrieveByUsername/{username}")]
+    public async Task<IActionResult> GetAccountsByUsername(string username)
+    {
+        try
+        {
+            // Create a request to call the AccountController in your data layer web service
+            var request = new RestRequest($"account/retrieveByUsername/{username}", Method.Get);
+            var response = await _client.ExecuteAsync(request);
+
+            if (response.IsSuccessful && !string.IsNullOrEmpty(response.Content))
+            {
+                // Deserialize the response into a list of accounts
+                var accounts = JsonConvert.DeserializeObject<List<Account>>(response.Content);
+                _logger.LogInformation($"Successfully retrieved {accounts.Count} accounts for username: {username}");
+                return Ok(accounts);
+            }
+            else
+            {
+                return StatusCode((int)response.StatusCode, response.ErrorMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving accounts by username");
+            return StatusCode(500, $"Internal server error: {ex.Message}");
+        }
+    }
+
 
     [HttpPost("update")]
     public async Task<IActionResult> UpdateAccount([FromBody] Account account)

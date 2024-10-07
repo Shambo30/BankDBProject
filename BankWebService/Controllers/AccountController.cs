@@ -47,6 +47,26 @@ namespace BankWebService.Controllers
             }
         }
 
+        // Retrieve account details by username
+        [HttpGet("retrieveByUsername/{username}")]
+        public IActionResult GetAccountsByUsername(string username)
+        {
+            try
+            {
+                // Call the data access layer method to get accounts by username
+                var accounts = _dataAccess.GetAccountsByUsername(username);
+                if (accounts == null || !accounts.Any())
+                {
+                    return NotFound("No accounts found for the specified username.");
+                }
+                return Ok(accounts);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error: {ex.Message}");
+            }
+        }
+
         // Update account information
         [HttpPost("update")]
         public IActionResult UpdateAccount(Account account)

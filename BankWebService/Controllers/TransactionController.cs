@@ -22,12 +22,18 @@ namespace BankWebService.Controllers
         {
             try
             {
-                _dataAccess.Deposit(request.AccountNumber, request.Amount);
-                return Ok($"Successfully deposited {request.Amount} into account {request.AccountNumber}.");
+                if (request.RecipientAccount == null)
+                {
+                    return BadRequest("Recipient account is required for a deposit.");
+                }
+
+                _dataAccess.Deposit(request.RecipientAccount.Value, request.Amount);
+
+                return Ok($"Successfully deposited {request.Amount} into account {request.RecipientAccount}.");
             }
             catch (Exception ex)
             {
-                return BadRequest($"Error: {ex.Message}");
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
 
@@ -37,12 +43,18 @@ namespace BankWebService.Controllers
         {
             try
             {
-                _dataAccess.Withdraw(request.AccountNumber, request.Amount);
-                return Ok($"Successfully withdrew {request.Amount} from account {request.AccountNumber}.");
+                if (request.SenderAccount == null)
+                {
+                    return BadRequest("Sender account is required for a withdrawal.");
+                }
+
+                _dataAccess.Withdraw(request.SenderAccount.Value, request.Amount);
+
+                return Ok($"Successfully withdrew {request.Amount} from account {request.SenderAccount}.");
             }
             catch (Exception ex)
             {
-                return BadRequest($"Error: {ex.Message}");
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
 

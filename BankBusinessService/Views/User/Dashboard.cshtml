@@ -1,4 +1,5 @@
-﻿@{
+﻿@model DashboardViewModel
+@{
     ViewData["Title"] = "User Dashboard";
 }
 
@@ -16,13 +17,13 @@
 
         <!-- User Profile Information -->
         <div class="section mb-4">
-            <h2>Welcome, username!</h2>
+            <h2>Welcome, @Model.UserProfile.Username!</h2>
             <div class="d-flex align-items-center">
                 <div class="ml-3">
-                    <h3>Name</h3>
-                    <p>Email: <a href="mailto:user@example.com">user@example.com</a></p>
-                    <p>Phone: (123) 456-7890</p>
-                    <p>Address: 123 Fake Street</p>
+                    <h3>@Model.UserProfile.Name</h3>
+                    <p>Email: <a href="mailto:@Model.UserProfile.Email">@Model.UserProfile.Email</a></p>
+                    <p>Phone: @Model.UserProfile.Phone</p>
+                    <p>Address: @Model.UserProfile.Address</p>
                     <button class="btn btn-primary">Update Personal Details</button>
                 </div>
             </div>
@@ -31,7 +32,7 @@
         <!-- Account Summary -->
         <div class="section mb-4">
             <h2>Your Accounts</h2>
-            <table class="table table-bordered">
+            <table class="table table-bordered" id="accountSummaryTable">
                 <thead>
                     <tr>
                         <th>Account Number</th>
@@ -40,16 +41,22 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Javascript injects accounts here -->
+                    @foreach (var account in Model.UserAccounts)
+                    {
+                            <tr>
+                                <td>@account.account_number</td>
+                                <td>@account.balance</td> 
+                                <td><button class="btn btn-secondary" onclick="viewTransactionHistory(@account.account_number)">View Transaction History</button></td>
+                            </tr>
+                    }
                 </tbody>
             </table>
-            <button class="btn btn-secondary mt-3">View Transaction History</button>
         </div>
 
         <!-- Transaction History -->
         <div class="section mb-4">
             <h2>Transaction History</h2>
-            <table class="table table-bordered">
+            <table class="table table-bordered" id="transactionHistoryTable">
                 <thead>
                     <tr>
                         <th>Date</th>
@@ -58,7 +65,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- JavaScript is injected here -->
+                    <!-- JavaScript will inject transaction history here -->
                 </tbody>
             </table>
             <button class="btn btn-info mt-3">Filter Transactions</button>
@@ -67,7 +74,17 @@
         <!-- Money Transfer -->
         <div class="section mb-4">
             <h2>Money Transfer</h2>
-            <form>
+            <form id="moneyTransferForm">
+                <div class="form-group">
+                    <label for="sender-account">Select Account to Transfer From:</label>
+                    <select id="sender-account" class="form-control" required>
+                        <option value="">Select your account</option>
+                        @foreach (var account in Model.UserAccounts)
+                        {
+                            <option value="@account.account_number">Account: @account.account_number - Balance: @account.balance</option>
+                        }
+                    </select>
+                </div>
                 <div class="form-group">
                     <label for="recipient-account">Recipient Account Number:</label>
                     <input type="text" id="recipient-account" class="form-control" required>
@@ -83,12 +100,139 @@
         <!-- Security Features -->
         <div class="section mb-4">
             <h2>Security Features</h2>
-            <button class="btn btn-danger">Log Out</button>
+            <button class="btn btn-danger" onclick="logout()">Log Out</button>
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        // AJAX request to handle money transfer
+        $('#moneyTransferForm').submit(function (e) {
+            e.preventDefault(); // Prevent the form from submitting traditionally
+
+            let senderAccount = $('#sender-account').val();
+            let recipientAccount = $('#recipient-account').val();
+            let transferAmount = $('#transfer-amount').val();
+
+            if (senderAccount === recipientAccount) {
+                alert('You cannot transfer money to the same account.');
+                return;
+            }
+
+            $.ajax({
+                url: '/api/BTransaction/transfer',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    SenderAccount: senderAccount,
+                    RecipientAccount: recipientAccount,
+                    Amount: transferAmount
+                }),
+                success: function (response) {
+                    alert('Transfer successful!');
+                    // Refresh account balances after the transfer
+                    refreshAccountBalances(`@Model.UserProfile.Username`);
+                },
+                error: function (xhr) {
+                    let errorMessage = xhr.responseText || 'An error occurred during the transfer.';
+                    try {
+                        let errorObj = JSON.parse(xhr.responseText);
+                        errorMessage = errorObj.message || errorMessage;
+                    } catch (e) {
+                        console.error('Error parsing server response:', e);
+                    }
+                    alert('Error in transfer: ' + errorMessage);
+                }
+            });
+        });
+
+        function refreshAccountBalances(username) {
+            $.ajax({
+                url: `/api/BAccount/retrieveByUsername/${username}`,
+                method: 'GET',
+                success: function (data) {
+                    let accountTable = $('#accountSummaryTable tbody');
+                    let senderAccountSelect = $('#sender-account');
+                    let transactionTable = $('#transactionHistoryTable tbody');
+
+                    // Clear all existing table rows and select options
+                    accountTable.empty();
+                    senderAccountSelect.empty();
+                    transactionTable.empty();
+
+
+                    // Append the default option for the select
+                    senderAccountSelect.append('<option value="">Select your account</option>');
+
+                    data.forEach(account => {
+                        // Append rows to the account summary table
+                        accountTable.append(`
+                            <tr>
+                                <td>${account.account_number}</td>
+                                <td>${account.balance}</td>
+                                <td><button class="btn btn-secondary" onclick="viewTransactionHistory(${account.account_number})">View Transaction History</button></td>
+                            </tr>
+                        `);
+
+                        // Append options to the sender account select
+                        senderAccountSelect.append(`
+                            <option value="${account.account_number}">Account: ${account.account_number} - Balance: ${account.balance}</option>
+                        `);
+                    });
+                },
+                error: function (error) {
+                    console.error('Error refreshing account balances:', error);
+                }
+            });
+        }
+
+
+        // AJAX request to view transaction history
+        function viewTransactionHistory(accountNumber) {
+            $.ajax({
+                url: `/api/BTransaction/history/${accountNumber}`,
+                method: 'GET',
+                success: function (data) {
+                    displayTransactionHistory(data);
+                },
+                error: function (error) {
+                    console.error('Error fetching transaction history:', error);
+                }
+            });
+        }
+
+        // Function to display transaction history dynamically
+        function displayTransactionHistory(transactions) {
+            let transactionTable = $('#transactionHistoryTable tbody');
+            transactionTable.empty();
+            transactions.forEach(transaction => {
+                const formattedDate = new Date(transaction.transaction_date).toLocaleString(); // Formats the date to a more readable format
+                transactionTable.append(`
+                        <tr>
+                            <td>${formattedDate}</td>
+                            <td>${transaction.transaction_id}</td>
+                            <td>${transaction.amount}</td>
+                        </tr>
+                    `);
+            });
+        }
+
+        // Logout function
+        function logout() {
+            $.ajax({
+                url: '/Login/UserLogout',
+                method: 'POST',
+                success: function () {
+                    window.location.href = '/Login/UserLogin';
+                    console.log('Logging out...')
+                },
+                error: function (error) {
+                    alert('Error logging out: ', error);
+                }
+            });
+        }
+    </script>
+
 </body>
 </html>
-
