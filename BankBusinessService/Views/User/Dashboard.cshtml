@@ -154,10 +154,13 @@
                 success: function (data) {
                     let accountTable = $('#accountSummaryTable tbody');
                     let senderAccountSelect = $('#sender-account');
+                    let transactionTable = $('#transactionHistoryTable tbody');
 
-                    // Clear the existing table rows and select options
+                    // Clear all existing table rows and select options
                     accountTable.empty();
                     senderAccountSelect.empty();
+                    transactionTable.empty();
+
 
                     // Append the default option for the select
                     senderAccountSelect.append('<option value="">Select your account</option>');
@@ -217,8 +220,17 @@
 
         // Logout function
         function logout() {
-            // Logic to clear session and redirect to login page
-            console.log('Logging out...');
+            $.ajax({
+                url: '/Login/UserLogout',
+                method: 'POST',
+                success: function () {
+                    window.location.href = '/Login/UserLogin';
+                    console.log('Logging out...')
+                },
+                error: function (error) {
+                    alert('Error logging out: ', error);
+                }
+            });
         }
     </script>
 
