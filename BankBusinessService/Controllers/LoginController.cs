@@ -148,5 +148,12 @@ namespace BankBusinessService.Controllers
             HttpContext.Session.Clear(); // Clear the session
             return RedirectToAction("UserLogin", "Login");
         }
+
+        [HttpPost]
+        public IActionResult AdminLogout()
+        {
+            HttpContext.Session.Clear(); // Clear the session
+            return RedirectToAction("AdminLogin", "Login");
+        }
     }
 }

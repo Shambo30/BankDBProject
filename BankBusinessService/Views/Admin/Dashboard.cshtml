@@ -79,8 +79,31 @@
             <p>Logs and audit trails for tracking admin activities and system changes will be displayed here.</p>
             <button class="btn btn-info">View Logs</button>
         </div>
+
+        <div class="section mb-4">
+            <h2>Logout</h2>
+            <button class="btn btn-danger" onclick="logout()">Log Out</button>
+        </div>
+
+
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        // Logout function
+        function logout() {
+            $.ajax({
+                url: '/Login/AdminLogout',
+                method: 'POST',
+                success: function () {
+                    window.location.href = '/Login/AdminLogin';
+                    console.log('Logging out...')
+                },
+                error: function (error) {
+                    alert('Error logging out: ', error);
+                }
+            });
+        }
+    </script>
 </body>
