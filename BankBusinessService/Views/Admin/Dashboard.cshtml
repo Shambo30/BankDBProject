@@ -98,6 +98,7 @@
             </table>
         </div>
 
+
         <div class="section mb-4">
             <h2>Security and Access Control</h2>
             <p>Logs and audit trails for tracking admin activities and system changes will be displayed here.</p>
@@ -126,6 +127,25 @@
         $(document).ready(function () {
             updatePageContents()
         });
+
+        function updatePageContents() {
+            // clear existing tables (just in case)
+            clearAllTables()
+            // retrieve list of all profiles
+            retrieveProfilesList()
+            // refresh list of all transactions
+            retrieveTransactionsList()
+            // update displayed admin profile
+            updateAdminProfileDisplay()
+        }
+
+        function clearAllTables() {
+            let profileTable = $('#allProfilesTable tbody');
+            let transactionTable = $('#allTransactionsTable tbody');
+
+            profileTable.empty();
+            transactionTable.empty();
+        }
         
         $('#updateProfileForm').submit(function (e) {
             e.preventDefault();
@@ -164,33 +184,21 @@
                 method: 'GET',
                 success: function (data) {
                     console.log("AJAX response:", data);
+                    
                     $('#profile-name').text(data.name);
                     $('#profile-email').text(data.email);
                     $('#profile-phone').text(data.phone);
+
+                    $('#updated-name').text(data.name);
+                    $('#updated-email').text(data.email);
+                    $('#updated-phone').text(data.phone);
+                    
                 },
                 error: function (error) {
                     console.error('Error fetching profile:', error);
                 }
             });
    
-        }
-
-        function updatePageContents()
-        {
-            // clear existing tables (just in case)
-            clearAllTables()
-            // retrieve list of all profiles 
-            retrieveProfilesList()
-            // refresh list of all transactions
-            retrieveTransactionsList()
-        }
-
-        function clearAllTables() {
-            let profileTable = $('#allProfilesTable tbody');
-            let transactionTable = $('#allTransactionsTable tbody');
-
-            profileTable.empty();
-            transactionTable.empty();
         }
 
         function retrieveProfilesList() {
@@ -206,6 +214,49 @@
                 }
             });
         }
+
+        function deleteProfile(username) {
+            if (confirm("Are you sure you want to delete this profile?")) {
+                // Start with the profile deletion
+                const profileDeletion = $.ajax({
+                    url: `/api/BProfile/delete/${username}`,
+                    method: 'POST',
+                });
+
+                // Get associated accounts and delete them
+                const associatedAccountsDeletion = $.ajax({
+                    url: `/api/BAccount/retrieveByUsername/${username}`,
+                    method: 'GET'
+                }).then(response => {
+                    const deletePromises = response
+                        .filter(account => username === account.holder_username)
+                        .map(account => {
+                            return $.ajax({
+                                url: `/api/BAccount/delete/${account.account_number}`,
+                                method: 'POST',
+                            }).then(response => {
+                                console.log("Account deleted:", response);
+                            }).catch(error => {
+                                console.error('Error deleting account:', error);
+                            });
+                        });
+
+                    // Return a promise that resolves when all account deletions complete
+                    return Promise.all(deletePromises);
+                });
+
+                // Combine both promises
+                Promise.all([profileDeletion, associatedAccountsDeletion])
+                    .then(() => {
+                        console.log("Profile and associated accounts deleted successfully.");
+                        retrieveProfilesList(); // Call to refresh the list after deletion
+                    })
+                    .catch(error => {
+                        console.error('Error processing deletions:', error);
+                    });
+            }
+        }
+
         // Function to display profile history dynamically
         // <button class="btn btn-primary" onclick="editProfile('${profile.Username}')">Edit</button>
         function displayProfiles(profiles) {
@@ -223,7 +274,7 @@
                             <td>
                            
                                     <button class="btn btn-primary">Edit</button>
-                                    <button class="btn btn-danger">Delete</button>
+                                    <button class="btn btn-danger" onclick="deleteProfile('${profile.username}')">Delete</button>
                             </td>
                         </tr>
                     `);
