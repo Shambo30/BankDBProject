@@ -197,17 +197,11 @@ namespace DatabaseLib
         {
             try
             {
-                if(RetrieveProfileByUsername(username) != null)
+
+                using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
                 {
-                    using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
-                    {
-                        cnn.Execute("DELETE FROM profiles WHERE username LIKE @username", new { username = $"%{username}%" });
-                    }
-                }
-                else 
-                {
-                    throw new InvalidOperationException("Username does not exist in database");
-                }
+                    cnn.Execute("DELETE FROM profiles WHERE username LIKE @username", new { username = $"%{username}%" });
+                };
                 
             }
             catch (SQLiteException ex)
