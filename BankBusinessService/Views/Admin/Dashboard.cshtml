@@ -42,17 +42,55 @@
             </form>
         </div>
 
+        <!-- User Management Table -->
         <div class="section mb-4">
             <h2>User Management</h2>
             <div class="form-group">
                 <label for="user-search-name">Search Users:</label>
                 <input type="text" id="user-search-name" class="form-control" placeholder="Search by profile username...">
             </div>
-            @* <div class="form-group">
-                <label for="user-search-account">Search Users:</label>
-                <input type="number" id="user-search-name" class="form-control" placeholder="Search by account number...">
-            </div> *@
-            <button class="btn btn-success mb-3">Create User Profile</button>
+
+            <button class="btn btn-success mb-3" onclick="$('#newUser').show();">Create User Profile</button>
+
+            <!-- Create new user form (hidden by default) -->
+            <div class="section mb-4" id="newUser" style="display: none;">
+                <h2>New User Profile Details</h2>
+                
+                <form id="newUserForm">
+                    <div class="form-group">
+                        <label for="newUser-fullname">Fullname</label>
+                        <input type="text" class="form-control" id="newUser-fullname" name="fullname" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newUser-uname">Username</label>
+                        <input type="text" class="form-control" id="newUser-uname" name="username" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newUser-email">Email</label>
+                        <input type="email" class="form-control" id="newUser-email" name="email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newUser-password">Password</label>
+                        <input type="text" class="form-control" id="newUser-password" name="password" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newUser-phone">Phone</label>
+                        <input type="text" class="form-control" id="newUser-phone" name="phone" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newUser-address">Address</label>
+                        <input type="text" class="form-control" id="newUser-address" name="address" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Create New Profile</button>
+                </form>
+            </div>
+
             <table class="table table-bordered" id="allProfilesTable">
                 <thead>
                     <tr>
@@ -71,6 +109,41 @@
             </table>
         </div>
 
+        <!-- Selected User Update Form (hidden by default) -->
+        <div class="section mb-4" id="selectUserUpdate" style="display: none;">
+            <h2>Update User Profile Details</h2>
+            <h4 id="updatingFor">Updating for: </h4>
+            <form id="updateUserForm">
+                <div class="form-group">
+                    <label for="user-fullname">Fullname</label>
+                    <input type="text" class="form-control" id="user-fullname" name="name" value="" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="user-email">Email</label>
+                    <input type="email" class="form-control" id="user-email" name="email" value="" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="user-password">Password</label>
+                    <input type="text" class="form-control" id="user-password" name="password" value="" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="user-phone">Phone</label>
+                    <input type="text" class="form-control" id="user-phone" name="phone" value="" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="user-address">Address</label>
+                    <input type="text" class="form-control" id="user-address" name="address" value="" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Update</button>
+            </form>
+        </div>
+
+        <!-- Transaction Management -->
         <div class="section mb-4">
             <h2>Transaction Management</h2>
             <div class="form-group">
@@ -97,6 +170,7 @@
                 </tbody>
             </table>
         </div>
+       
 
         <div class="section mb-4">
             <h2>Security and Access Control</h2>
@@ -119,70 +193,24 @@
         let allTransactions = [];
         let allProfiles = [];
         let filteredTransactions = [];
-
         // Track sorting order of transaction ID, default ascending
-        let sortOrder = { ascending: true }; 
+        let sortOrder = { ascending: true };
+        // selectedUser for updating user profiles
+        let selectedUser = "";
 
         $(document).ready(function () {
             updatePageContents()
         });
-        
-        $('#updateProfileForm').submit(function (e) {
-            e.preventDefault();
 
-            let name = $('#updated-name').val();
-            let phone = $('#updated-phone').val();
-            let email = $('#updated-email').val();
-
-            $.ajax({
-                url: `/api/BProfile/update`,
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    Username: '@Model.UserProfile.Username',
-                    Password: '@Model.UserProfile.Password',
-                    Name: name,
-                    Email: email,
-                    Address: '@Model.UserProfile.Address',
-                    Phone: phone,
-                    Picture: '@Model.UserProfile.Picture'
-                }),
-                success: function (response) {
-                    console.log("AJAX response:", response);
-                    updateAdminProfileDisplay();
-                },
-                error: function (error) {
-                    console.error('Error updating profile: ', error);
-                    alert('Error updating profile. Please try again.');
-                }
-            });
-        });
-
-        function updateAdminProfileDisplay() {    
-            $.ajax({
-                url: `/api/BProfile/retrieve/admin`,
-                method: 'GET',
-                success: function (data) {
-                    console.log("AJAX response:", data);
-                    $('#profile-name').text(data.name);
-                    $('#profile-email').text(data.email);
-                    $('#profile-phone').text(data.phone);
-                },
-                error: function (error) {
-                    console.error('Error fetching profile:', error);
-                }
-            });
-   
-        }
-
-        function updatePageContents()
-        {
+        function updatePageContents() {
             // clear existing tables (just in case)
             clearAllTables()
-            // retrieve list of all profiles 
+            // retrieve list of all profiles
             retrieveProfilesList()
             // refresh list of all transactions
             retrieveTransactionsList()
+            // update displayed admin profile
+            updateAdminProfileDisplay()
         }
 
         function clearAllTables() {
@@ -191,6 +219,144 @@
 
             profileTable.empty();
             transactionTable.empty();
+        }
+        
+        $('#updateProfileForm').submit(function (e) {
+            e.preventDefault();
+
+            if (confirm('Are you sure you want to update the admin profile?')) {
+                let name = $('#updated-name').val();
+                let phone = $('#updated-phone').val();
+                let email = $('#updated-email').val();
+
+                $.ajax({
+                    url: `/api/BProfile/update`,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        Username: '@Model.UserProfile.Username',
+                        Password: '@Model.UserProfile.Password',
+                        Name: name,
+                        Email: email,
+                        Address: '@Model.UserProfile.Address',
+                        Phone: phone,
+                        Picture: '@Model.UserProfile.Picture'
+                    }),
+                    success: function (response) {
+                        console.log("AJAX response:", response);
+                        updateAdminProfileDisplay();
+                    },
+                    error: function (error) {
+                        console.error('Error updating profile: ', error);
+                        alert('Error updating profile. Please try again.');
+                    }
+                });
+            }
+        });
+
+        $('#updateUserForm').submit(function (e) {
+            e.preventDefault();
+            if (confirm(`Are you sure you want to update the profile for ${selectedUser}?`)) {
+            
+                let fullname =$('#user-fullname').val();
+                let email = $('#user-email').val();
+                let password = $('#user-password').val();
+                let phone = $('#user-phone').val();
+                let address = $('#user-address').val();
+
+                $.ajax({
+                    url: `/api/BProfile/update`,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        Username: selectedUser,
+                        Password: password,
+                        Name: fullname,
+                        Email: email,
+                        Address: address,
+                        Phone: phone,
+                        Picture: "404"
+                    }),
+                    success: function (response) {
+                        console.log("AJAX response:", response);
+                        retrieveProfilesList();
+                        // hide user update form
+                        $('#selectUserUpdate').hide();
+                        // navigate to profiles table
+                        document.getElementById('allProfilesTable').scrollIntoView({ behavior: 'smooth' });
+                    
+                    
+                    },
+                    error: function (error) {
+                        console.error('Error updating profile: ', error);
+                        alert('Error updating profile. Please try again.');
+                    }
+                });
+            }
+        });
+
+        $('#newUserForm').submit(function (e) {
+            e.preventDefault();
+            let selectedUser = $('#newUser-uname').val();
+            if (confirm(`Are you sure you want to create a new profile for ${selectedUser}?`)) {
+
+                let fullname = $('#newUser-fullname').val();
+                let email = $('#newUser-email').val();
+                let password = $('#newUser-password').val();
+                let phone = $('#newUser-phone').val();
+                let address = $('#newUser-address').val();
+
+                $.ajax({
+                    url: `/api/BProfile/create`,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        Username: selectedUser,
+                        Password: password,
+                        Name: fullname,
+                        Email: email,
+                        Address: address,
+                        Phone: phone,
+                        Picture: "404"
+                    }),
+                    success: function (response) {
+                        console.log("AJAX response:", response);
+                        retrieveProfilesList();
+                        // hide user update form
+                        $('#newUser').hide();
+                        // navigate to profiles table
+                        document.getElementById('allProfilesTable').scrollIntoView({ behavior: 'smooth' });
+
+
+                    },
+                    error: function (error) {
+                        console.error('Error updating profile: ', error);
+                        alert('Error updating profile. Please try again.');
+                    }
+                });
+            }
+        });
+
+        function updateAdminProfileDisplay() {    
+            $.ajax({
+                url: `/api/BProfile/retrieve/admin`,
+                method: 'GET',
+                success: function (data) {
+                    console.log("AJAX response:", data);
+                    
+                    $('#profile-name').text(data.name);
+                    $('#profile-email').attr('href', 'mailto:' + data.email).text(data.email);
+                    $('#profile-phone').text(data.phone);
+
+                    $('#updated-name').text(data.name);
+                    $('#updated-email').text(data.email);
+                    $('#updated-phone').text(data.phone);
+                },
+                error: function (error) {
+                    console.error('Error fetching profile:', error);
+                }
+            });
+   
         }
 
         function retrieveProfilesList() {
@@ -206,13 +372,16 @@
                 }
             });
         }
-        // Function to display profile history dynamically
-        // <button class="btn btn-primary" onclick="editProfile('${profile.Username}')">Edit</button>
+
+        // Function to display profiles dynamically
         function displayProfiles(profiles) {
             let profileTable = $('#allProfilesTable tbody');
             profileTable.empty();
+
             profiles.forEach(profile => {
-                profileTable.append(`
+                // Check if the profile's username is 'admin'
+                if (profile.username === 'admin') {
+                    profileTable.append(`
                         <tr>
                             <td>${profile.username}</td>
                             <td>${profile.name}</td>
@@ -221,14 +390,100 @@
                             <td>${profile.address}</td>
                             <td>${profile.phone}</td>
                             <td>
-                           
-                                    <button class="btn btn-primary">Edit</button>
-                                    <button class="btn btn-danger">Delete</button>
+                                <button class="btn btn-primary" onclick="document.getElementById('profileInfo').scrollIntoView({ behavior: 'smooth' });">Edit</button>
                             </td>
                         </tr>
                     `);
+                } else {
+                    profileTable.append(`
+                        <tr>
+                            <td>${profile.username}</td>
+                            <td>${profile.name}</td>
+                            <td>${profile.email}</td>
+                            <td>${profile.password}</td>
+                            <td>${profile.address}</td>
+                            <td>${profile.phone}</td>
+                            <td>
+                                <button class="btn btn-primary" onclick="selectUserProfile('${profile.username}')">Edit</button>
+                                <button class="btn btn-danger" onclick="deleteProfile('${profile.username}')">Delete</button>
+                            </td>
+                        </tr>
+                    `);
+                }
             });
         }
+
+
+        function selectUserProfile(username) {
+            $.ajax({
+                url: `/api/BProfile/retrieve/${username}`,
+                method: 'GET',
+                success: function (data) {
+                    // change the variable for selectedUser
+                    selectedUser = data.username
+                    console.log("selectedUser updated to: ", selectedUser)
+                    // update heading
+                    $('#updatingFor').text('Updating for: ' + selectedUser);
+                    // update user values
+                    $('#user-fullname').val(data.name);
+                    $('#user-email').val(data.email);
+                    $('#user-password').val(data.password);
+                    $('#user-phone').val(data.phone);
+                    $('#user-address').val(data.address);
+                    // show form
+                    $('#selectUserUpdate').show();
+                    // navigate to selectUserUpdate
+                    document.getElementById('selectUserUpdate').scrollIntoView({ behavior: 'smooth' });
+                },
+                error: function (error) {
+                    console.error('Error fetching profile history:', error);
+                }
+            });
+        }
+
+        function deleteProfile(username) {
+            if (confirm("Are you sure you want to delete this profile?")) {
+                // Delete the profile first
+                $.ajax({
+                    url: `/api/BProfile/delete/${username}`,
+                    method: 'POST',
+                }).then(() => {
+                    console.log("Profile deleted successfully.");
+                    retrieveProfilesList(); // Refresh the list after deletion
+                    // Now retrieve and delete associated accounts
+                    return $.ajax({
+                        url: `/api/BAccount/retrieveByUsername/${username}`,
+                        method: 'GET'
+                    });
+                }).then(response => {
+                    console.log("Response from server with associated accounts", response);
+
+                    // If no accounts found, log and resolve
+                    if (!Array.isArray(response) || response.length === 0) {
+                        console.log("No associated accounts found for this profile.");
+                        return Promise.resolve(); // Resolve if no accounts
+                    }
+
+                    // Prepare delete promises for each account
+                    const deletePromises = response.map(account => {
+                        return $.ajax({
+                            url: `/api/BAccount/delete/${account.account_number}`,
+                            method: 'POST',
+                        }).then(response => {
+                            console.log("Account deleted:", response);
+                        }).catch(error => {
+                            console.error('Error deleting account:', error);
+                        });
+                    });
+
+                    // Return a promise that resolves when all account deletions complete
+                    return Promise.all(deletePromises);
+                }).catch(error => {
+                    console.error('Error retrieving associated accounts or deleting profile:', error);
+                });
+            }
+        }
+
 
         function filterUsers() {
             const nameSearch = $('#user-search-name').val().toLowerCase();

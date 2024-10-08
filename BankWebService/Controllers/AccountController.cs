@@ -55,10 +55,7 @@ namespace BankWebService.Controllers
             {
                 // Call the data access layer method to get accounts by username
                 var accounts = _dataAccess.GetAccountsByUsername(username);
-                if (accounts == null || !accounts.Any())
-                {
-                    return NotFound("No accounts found for the specified username.");
-                }
+               
                 return Ok(accounts);
             }
             catch (Exception ex)
