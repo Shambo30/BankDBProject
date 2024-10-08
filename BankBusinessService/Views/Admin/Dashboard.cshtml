@@ -14,27 +14,46 @@
         @* Margin-bottom 4 (high, but little bit less spacing) *@
         <div class="section mb-4">
             <h2>Admin Profile Information</h2>
-
-            @* Full screen flex box; align items in it to the center *@
             <div class="d-flex align-items-center">
-                <div>
-                    <h3>Admin Name</h3>
-                    <p>Email: <a href="mailto:admin@example.com">admin@example.com</a></p>
-                    <p>Phone: (123) 456-7890</p>
-                    @* btn-primary provides the colour of the button *@
-                    <button class="btn btn-primary">Update Personal Details</button>
+                <div id="profileInfo">
+                    <h3>Name: <span id="profile-name">@Model.UserProfile.Name</span></h3>
+                    <p>Email: <a id="profile-email" href="mailto:@Model.UserProfile.Email">@Model.UserProfile.Email</a></p>
+                    <p>Phone: <span id="profile-phone">@Model.UserProfile.Phone</span></p>
                 </div>
             </div>
         </div>
 
         <div class="section mb-4">
+            <h2>Update Personal Details</h2>
+            <form id="updateProfileForm">
+                <div class="form-group">
+                    <label for="updated-name">Name</label>
+                    <input type="text" class="form-control" id="updated-name" name="name" value="@Model.UserProfile.Name" required>
+                </div>
+                <div class="form-group">
+                    <label for="updated-email">Email</label>
+                    <input type="email" class="form-control" id="updated-email" name="email" value="@Model.UserProfile.Email" required>
+                </div>
+                <div class="form-group">
+                    <label for="updated-phone">Phone</label>
+                    <input type="text" class="form-control" id="updated-phone" name="phone" value="@Model.UserProfile.Phone" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Update</button>
+            </form>
+        </div>
+
+        <div class="section mb-4">
             <h2>User Management</h2>
             <div class="form-group">
-                <label for="user-search">Search Users:</label>
-                <input type="text" id="user-search" class="form-control" placeholder="Search by profile username...">
+                <label for="user-search-name">Search Users:</label>
+                <input type="text" id="user-search-name" class="form-control" placeholder="Search by profile username...">
             </div>
+            @* <div class="form-group">
+                <label for="user-search-account">Search Users:</label>
+                <input type="number" id="user-search-name" class="form-control" placeholder="Search by account number...">
+            </div> *@
             <button class="btn btn-success mb-3">Create User Profile</button>
-            <table class="table table-bordered">
+            <table class="table table-bordered" id="allProfilesTable">
                 <thead>
                     <tr>
                         <th>Username</th>
@@ -43,7 +62,6 @@
                         <th>Password</th>
                         <th>Address</th>
                         <th>Phone</th>
-                        <th>Picture</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -56,16 +74,22 @@
         <div class="section mb-4">
             <h2>Transaction Management</h2>
             <div class="form-group">
-                <label for="transaction-search">Search Transactions:</label>
-                <input type="text" id="transaction-search" class="form-control" placeholder="Search by ID...">
+                <label for="transaction-search-id">Search Transactions:</label>
+                <input type="number" id="transaction-search-id" class="form-control" placeholder="Search by Transaction ID...">
             </div>
-            <table class="table table-bordered">
+
+            <div class="form-group">
+                <label><input type="checkbox" id="filter-deposit"> Deposits Only</label>
+                <label><input type="checkbox" id="filter-withdrawal"> Withdrawals Only</label>
+            </div>
+
+            <table class="table table-bordered" id="allTransactionsTable">
                 <thead>
                     <tr>
-                        <th>Transaction ID</th>
-                        <th>User ID</th>
+                        <th onclick="sortTransactions('transaction_id')">Transaction ID <span>&#x25B2;&#x25BC;</span></th>
+                        <th>From Account ID</th>
                         <th>Date</th>
-                        <th>Amount</th>
+                        <th onclick="sortTransactions('amount')">Amount <span>&#x25B2;&#x25BC;</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -79,8 +103,247 @@
             <p>Logs and audit trails for tracking admin activities and system changes will be displayed here.</p>
             <button class="btn btn-info">View Logs</button>
         </div>
+
+        <div class="section mb-4">
+            <h2>Logout</h2>
+            <button class="btn btn-danger" onclick="logout()">Log Out</button>
+        </div>
+
+
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        // Store tables
+        let allTransactions = [];
+        let allProfiles = [];
+        let filteredTransactions = [];
+
+        // Track sorting order of transaction ID, default ascending
+        let sortOrder = { ascending: true }; 
+
+        $(document).ready(function () {
+            updatePageContents()
+        });
+        
+        $('#updateProfileForm').submit(function (e) {
+            e.preventDefault();
+
+            let name = $('#updated-name').val();
+            let phone = $('#updated-phone').val();
+            let email = $('#updated-email').val();
+
+            $.ajax({
+                url: `/api/BProfile/update`,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    Username: '@Model.UserProfile.Username',
+                    Password: '@Model.UserProfile.Password',
+                    Name: name,
+                    Email: email,
+                    Address: '@Model.UserProfile.Address',
+                    Phone: phone,
+                    Picture: '@Model.UserProfile.Picture'
+                }),
+                success: function (response) {
+                    console.log("AJAX response:", response);
+                    updateAdminProfileDisplay();
+                },
+                error: function (error) {
+                    console.error('Error updating profile: ', error);
+                    alert('Error updating profile. Please try again.');
+                }
+            });
+        });
+
+        function updateAdminProfileDisplay() {    
+            $.ajax({
+                url: `/api/BProfile/retrieve/admin`,
+                method: 'GET',
+                success: function (data) {
+                    console.log("AJAX response:", data);
+                    $('#profile-name').text(data.name);
+                    $('#profile-email').text(data.email);
+                    $('#profile-phone').text(data.phone);
+                },
+                error: function (error) {
+                    console.error('Error fetching profile:', error);
+                }
+            });
+   
+        }
+
+        function updatePageContents()
+        {
+            // clear existing tables (just in case)
+            clearAllTables()
+            // retrieve list of all profiles 
+            retrieveProfilesList()
+            // refresh list of all transactions
+            retrieveTransactionsList()
+        }
+
+        function clearAllTables() {
+            let profileTable = $('#allProfilesTable tbody');
+            let transactionTable = $('#allTransactionsTable tbody');
+
+            profileTable.empty();
+            transactionTable.empty();
+        }
+
+        function retrieveProfilesList() {
+            $.ajax({
+                url: `/api/BProfile/all`,
+                method: 'GET',
+                success: function (data) {
+                    allProfiles = data
+                    displayProfiles(allProfiles);
+                },
+                error: function (error) {
+                    console.error('Error fetching profile history:', error);
+                }
+            });
+        }
+        // Function to display profile history dynamically
+        // <button class="btn btn-primary" onclick="editProfile('${profile.Username}')">Edit</button>
+        function displayProfiles(profiles) {
+            let profileTable = $('#allProfilesTable tbody');
+            profileTable.empty();
+            profiles.forEach(profile => {
+                profileTable.append(`
+                        <tr>
+                            <td>${profile.username}</td>
+                            <td>${profile.name}</td>
+                            <td>${profile.email}</td>
+                            <td>${profile.password}</td>
+                            <td>${profile.address}</td>
+                            <td>${profile.phone}</td>
+                            <td>
+                           
+                                    <button class="btn btn-primary">Edit</button>
+                                    <button class="btn btn-danger">Delete</button>
+                            </td>
+                        </tr>
+                    `);
+            });
+        }
+
+        function filterUsers() {
+            const nameSearch = $('#user-search-name').val().toLowerCase();
+            // const accountSearch = $('#user-search-account').val().toLowerCase();
+
+            const filteredProfiles = allProfiles.filter(profile => {
+                const matchesName = !nameSearch || profile.name.toLowerCase().includes(nameSearch);
+                // const matchesAccount = !accountSearch || profile.account_number.toString().includes(accountSearch);
+                return matchesName // && matchesAccount;
+            });
+
+            displayProfiles(filteredProfiles);
+        }
+
+        // Attach event listeners to the search inputs
+        $('#user-search-name').on('input', filterUsers);
+        // $('#user-search-account').on('input', filterUsers);
+
+        function retrieveTransactionsList() {
+            $.ajax({
+                url: `/api/BTransaction/all`,
+                method: 'GET',
+                success: function (data) {
+                    allTransactions = data
+                    displayTransactions(allTransactions);
+                },
+                error: function (error) {
+                    console.error('Error fetching transaction history:', error);
+                }
+            });
+        }
+
+        // Function to display transaction history dynamically
+        function displayTransactions(transactions) {
+            let transactionTable = $('#allTransactionsTable tbody');
+            transactionTable.empty();
+            transactions.forEach(transaction => {
+                const formattedDate = new Date(transaction.transaction_date).toLocaleString(); // Formats the date to a more readable format
+
+                const formattedAmount = new Intl.NumberFormat('en-AU', {
+                    style: 'currency',
+                    currency: 'AUD',
+                }).format(transaction.amount);
+
+                transactionTable.append(`
+                    <tr>
+                        <td>${transaction.transaction_id}</td>
+                        <td>${transaction.account_number}</td>
+                        <td>${formattedDate}</td>
+                        <td>${formattedAmount}</td>
+                    </tr>
+                `);
+            });
+            filteredTransactions = transactions;
+        }
+
+        // Filter function for transaction ID and deposits/withdrawals
+        function filterTransactions() {
+            const searchID = $('#transaction-search-id').val();
+            const isDepositChecked = $('#filter-deposit').is(':checked');
+            const isWithdrawalChecked = $('#filter-withdrawal').is(':checked');
+
+            const filtered = allTransactions.filter(transaction => {
+                const matchesID = !searchID || transaction.transaction_id.toString().startsWith(searchID);
+                const isDeposit = transaction.amount > 0;
+                const isWithdrawal = transaction.amount < 0;
+
+                // Check filters based on checkbox states
+                const matchesDeposit = isDepositChecked ? isDeposit : true;
+                const matchesWithdrawal = isWithdrawalChecked ? isWithdrawal : true;
+
+                return matchesID && matchesDeposit && matchesWithdrawal;
+            });
+
+            displayTransactions(filtered);
+        }
+
+        function sortTransactions(criterion) {
+            sortOrder.ascending = !sortOrder.ascending; // Toggle sorting order
+
+            const sortedTransactions = [...filteredTransactions].sort((a, b) => {
+                if (criterion === 'transaction_id') {
+                    return sortOrder.ascending
+                        ? a.transaction_id - b.transaction_id // Ascending order
+                        : b.transaction_id - a.transaction_id; // Descending order
+                } else if (criterion === 'amount') {
+                    return sortOrder.ascending
+                        ? a.amount - b.amount // Ascending order
+                        : b.amount - a.amount; // Descending order
+                }
+                return 0; // If no valid criterion, no sorting
+            });
+
+            displayTransactions(sortedTransactions);
+        }
+
+        // Event listener for the search input
+        $('#transaction-search-id').on('input', filterTransactions);
+        // Event listeners for the checkboxes
+        $('#filter-deposit').on('change', filterTransactions);
+        $('#filter-withdrawal').on('change', filterTransactions);
+
+        // Logout function
+        function logout() {
+            $.ajax({
+                url: '/Login/AdminLogout',
+                method: 'POST',
+                success: function () {
+                    window.location.href = '/Login/AdminLogin';
+                    console.log('Logging out...')
+                },
+                error: function (error) {
+                    alert('Error logging out: ', error);
+                }
+            });
+        }
+    </script>
 </body>

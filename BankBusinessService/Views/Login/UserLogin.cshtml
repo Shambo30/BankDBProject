@@ -22,6 +22,20 @@
                 <input type="password" class="form-control" id="password" name="password" required />
             </div>
             <button type="submit" class="btn btn-primary">Log In</button>
+            @* Error Handling Code - if username/password is invalid *@
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="text-danger">
+                    @* For loop to prevent null values from being referenced *@
+                    @foreach (var entry in ViewData.ModelState)
+                    {
+                        foreach (var error in entry.Value.Errors)
+                        {
+                            <div>@error.ErrorMessage</div>
+                        }
+                    }
+                </div>
+            }
         </form>
     </div>
 </body>

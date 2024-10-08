@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace DataSeeder
 {
@@ -18,7 +19,19 @@ namespace DataSeeder
             string[] lastNames = { "Reynolds", "Greene", "Snow", "Rowe", "Hogan", "Stewart" };
             string[] emailDomains = { "gmail.com", "yahoo.com", "outlook.com", "bigpond.com", "aol.com"};
 
-            for(int i = 0; i < numProfiles; i++) 
+            var admin = new Profile
+            {
+                Name = "Administrator",
+                Email = "admin@admin.com",
+                Address = "999 Admin Street",
+                Phone = "0400000000",
+                Picture = "404",
+                Password = "admin",
+                Username = "admin"
+            };
+            profiles.Add(admin);
+
+            for (int i = 0; i < numProfiles; i++) 
             {
                 string fName = firstNames[random.Next(firstNames.Length)];
                 string lName = lastNames[random.Next(lastNames.Length)];

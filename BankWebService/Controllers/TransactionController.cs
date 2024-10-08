@@ -76,6 +76,25 @@ namespace BankWebService.Controllers
                 return StatusCode(500, $"Error: {ex.Message}");
             }
         }
+
+        // retrieve all transactions
+        [HttpGet("all")]
+        public IActionResult AllTransactions() 
+        {
+            try
+            {
+                var transactions = _dataAccess.AllTransactions();
+                if (transactions == null || transactions.Count == 0)
+                {
+                    return NotFound("No transactions found");
+                }
+                return Ok(transactions);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error: {ex.Message}");
+            }
+        }
     }
 }
 

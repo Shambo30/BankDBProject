@@ -102,6 +102,34 @@ namespace BankBusinessService.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+
+        [HttpGet("all")]
+        public async Task<IActionResult> AllProfiles()
+        {
+            try
+            {
+                var request = new RestRequest("Profile/all", Method.Get);
+                var response = await _client.ExecuteAsync(request);
+
+                if (response.IsSuccessful && !string.IsNullOrEmpty(response.Content))
+                {
+                    var profiles = JsonConvert.DeserializeObject<List<Profile>>(response.Content);
+                    _logger.LogInformation($"Deserialising all profiles");
+
+                    return Ok(profiles);
+                }
+                else
+                {
+                    return StatusCode((int)response.StatusCode, response.ErrorMessage);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving transaction history");
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+
+        }
     }
 
 }

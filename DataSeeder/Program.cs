@@ -12,6 +12,9 @@ namespace DataSeeder
 {
     internal class Program
     {
+        public const int NUM_PROFILES = 10; // generates X profiles (+ admin at the top of the list)
+        public const int NUM_ACCTS = 20; // generates Y accounts
+        public const int NUM_TRANSACTIONS = 50; // generates Z transactions
         static void Main(string[] args)
         {
             string bankWebServiceDir = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "BankWebService"); // '..' to cd out of current directory
@@ -50,7 +53,7 @@ namespace DataSeeder
 
         static void SeedProfiles(SqliteDataAccess dataAccess)
         {
-            var profiles = ProfileGenerator.Generate(10);
+            var profiles = ProfileGenerator.Generate(NUM_PROFILES);
             foreach (var profile in profiles)
             {
                 try
@@ -68,9 +71,11 @@ namespace DataSeeder
         static void SeedAccounts(SqliteDataAccess dataAccess)
         {
             var profiles = GetProfiles(dataAccess);
+
             if (profiles != null)
             {
-                var accounts = AccountGenerator.Generate(20, profiles);
+                profiles.RemoveAt(0); // removes admin profile from list of profiles to generate accounts for (always first profile)
+                var accounts = AccountGenerator.Generate(NUM_ACCTS, profiles);
                 foreach (var account in accounts)
                 {
                     try
@@ -97,7 +102,7 @@ namespace DataSeeder
             var accounts = GetAccounts(dataAccess);
             if (accounts != null)
             {
-                int numTransactions = 50;
+                int numTransactions = NUM_TRANSACTIONS;
                 var random = new Random();
 
                 int numWithdrawals = random.Next(1, numTransactions);

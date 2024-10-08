@@ -69,6 +69,30 @@ namespace DatabaseLib
             }
         }
 
+        public List<Transaction> AllTransactions() 
+        {
+            try
+            {
+                using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+                {
+                    return cnn.Query<Transaction>("SELECT * FROM transactions").ToList();
+                }
+
+            }
+            catch (SQLiteException ex)
+            {
+                Console.WriteLine($"SQLite error occurred: {ex.Message}");
+                Console.WriteLine($"Error code: {ex.ErrorCode}");
+                Console.WriteLine($"SQLite error code: {ex.ResultCode}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while updating profile: {ex.Message}");
+                throw;
+            }
+        }
+
 
         public void AddProfile(Profile profile)
         {
