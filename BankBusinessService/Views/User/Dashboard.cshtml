@@ -43,11 +43,11 @@
                 <tbody>
                     @foreach (var account in Model.UserAccounts)
                     {
-                            <tr>
-                                <td>@account.account_number</td>
-                                <td>@account.balance</td> 
-                                <td><button class="btn btn-secondary" onclick="viewTransactionHistory(@account.account_number)">View Transaction History</button></td>
-                            </tr>
+                        <tr>
+                            <td>@account.account_number</td>
+                            <td>@String.Format("{0:C}", account.balance)</td> <!-- Format balance as currency -->
+                            <td><button class="btn btn-secondary" onclick="viewTransactionHistory(@account.account_number)">View Transaction History</button></td>
+                        </tr>
                     }
                 </tbody>
             </table>
@@ -60,7 +60,7 @@
                 <thead>
                     <tr>
                         <th>Date</th>
-                        <th>Description</th>
+                        <th>Transaction ID</th>
                         <th>Amount</th>
                     </tr>
                 </thead>
@@ -91,7 +91,7 @@
                 </div>
                 <div class="form-group">
                     <label for="transfer-amount">Amount:</label>
-                    <input type="number" id="transfer-amount" class="form-control" required>
+                    <input type="number" id="transfer-amount" class="form-control" required step="0.01" min="0"> <!-- step for 2dp, min = 0 to stop negative values -->
                 </div>
                 <button type="submit" class="btn btn-success">Initiate Transfer</button>
             </form>
@@ -187,7 +187,6 @@
             });
         }
 
-
         // AJAX request to view transaction history
         function viewTransactionHistory(accountNumber) {
             $.ajax({
@@ -208,11 +207,17 @@
             transactionTable.empty();
             transactions.forEach(transaction => {
                 const formattedDate = new Date(transaction.transaction_date).toLocaleString(); // Formats the date to a more readable format
+                
+                const formattedAmount = new Intl.NumberFormat('en-AU', {
+                    style: 'currency',
+                    currency: 'AUD',
+                }).format(transaction.amount);
+
                 transactionTable.append(`
                         <tr>
                             <td>${formattedDate}</td>
                             <td>${transaction.transaction_id}</td>
-                            <td>${transaction.amount}</td>
+                            <td>${formattedAmount}</td>
                         </tr>
                     `);
             });
