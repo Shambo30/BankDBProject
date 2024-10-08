@@ -30,9 +30,13 @@
         <div class="section mb-4">
             <h2>User Management</h2>
             <div class="form-group">
-                <label for="user-search">Search Users:</label>
-                <input type="text" id="user-search" class="form-control" placeholder="Search by profile username...">
+                <label for="user-search-name">Search Users:</label>
+                <input type="text" id="user-search-name" class="form-control" placeholder="Search by profile username...">
             </div>
+            @* <div class="form-group">
+                <label for="user-search-account">Search Users:</label>
+                <input type="number" id="user-search-name" class="form-control" placeholder="Search by account number...">
+            </div> *@
             <button class="btn btn-success mb-3">Create User Profile</button>
             <table class="table table-bordered" id="allProfilesTable">
                 <thead>
@@ -139,7 +143,6 @@
                 }
             });
         }
-
         // Function to display profile history dynamically
         // <button class="btn btn-primary" onclick="editProfile('${profile.Username}')">Edit</button>
         function displayProfiles(profiles) {
@@ -163,6 +166,23 @@
                     `);
             });
         }
+
+        function filterUsers() {
+            const nameSearch = $('#user-search-name').val().toLowerCase();
+            // const accountSearch = $('#user-search-account').val().toLowerCase();
+
+            const filteredProfiles = allProfiles.filter(profile => {
+                const matchesName = !nameSearch || profile.name.toLowerCase().includes(nameSearch);
+                // const matchesAccount = !accountSearch || profile.account_number.toString().includes(accountSearch);
+                return matchesName // && matchesAccount;
+            });
+
+            displayProfiles(filteredProfiles);
+        }
+
+        // Attach event listeners to the search inputs
+        $('#user-search-name').on('input', filterUsers);
+        // $('#user-search-account').on('input', filterUsers);
 
         function retrieveTransactionsList() {
             $.ajax({
@@ -241,8 +261,6 @@
 
             displayTransactions(sortedTransactions);
         }
-
-
 
         // Event listener for the search input
         $('#transaction-search-id').on('input', filterTransactions);
