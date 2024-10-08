@@ -93,5 +93,25 @@ namespace BankWebService.Controllers
                 return StatusCode(500, "An error occurred while updating the profile.");
             }
         }
+
+
+        // retrieve all profiles
+        [HttpGet("all")]
+        public IActionResult AllProfiles()
+        {
+            try
+            {
+                var profiles = _dataAccess.AllProfiles();
+                if (profiles == null || profiles.Count == 0)
+                {
+                    return NotFound("No profiles found");
+                }
+                return Ok(profiles);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error: {ex.Message}");
+            }
+        }
     }
 }
