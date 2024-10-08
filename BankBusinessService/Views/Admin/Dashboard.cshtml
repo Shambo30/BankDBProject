@@ -43,7 +43,6 @@
                         <th>Password</th>
                         <th>Address</th>
                         <th>Phone</th>
-                        <th>Picture</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -98,8 +97,57 @@
 
         function updatePageContents()
         {
+            // clear existing tables (just in case)
+            clearAllTables()
+            // retrieve list of all profiles 
+            retrieveProfilesList()
             // refresh list of all transactions
             retrieveTransactionsList()
+        }
+
+        function clearAllTables() {
+            let profileTable = $('#allProfilesTable tbody');
+            let transactionTable = $('#allTransactionsTable tbody');
+
+            profileTable.empty();
+            transactionTable.empty();
+        }
+
+        function retrieveProfilesList() {
+            $.ajax({
+                url: `/api/BProfile/all`,
+                method: 'GET',
+                success: function (data) {
+                    displayProfiles(data);
+                },
+                error: function (error) {
+                    console.error('Error fetching profile history:', error);
+                }
+            });
+        }
+
+        // Function to display profile history dynamically
+        // <button class="btn btn-primary" onclick="editProfile('${profile.Username}')">Edit</button>
+        function displayProfiles(profiles) {
+            let profileTable = $('#allProfilesTable tbody');
+            profileTable.empty();
+            profiles.forEach(profile => {
+                profileTable.append(`
+                        <tr>
+                            <td>${profile.username}</td>
+                            <td>${profile.name}</td>
+                            <td>${profile.email}</td>
+                            <td>${profile.password}</td>
+                            <td>${profile.address}</td>
+                            <td>${profile.phone}</td>
+                            <td>
+                           
+                                    <button class="btn btn-primary">Edit</button>
+                                    <button class="btn btn-danger">Delete</button>
+                            </td>
+                        </tr>
+                    `);
+            });
         }
 
         function retrieveTransactionsList() {
