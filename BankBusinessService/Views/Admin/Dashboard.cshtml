@@ -14,17 +14,32 @@
         @* Margin-bottom 4 (high, but little bit less spacing) *@
         <div class="section mb-4">
             <h2>Admin Profile Information</h2>
-
-            @* Full screen flex box; align items in it to the center *@
             <div class="d-flex align-items-center">
-                <div>
-                    <h3>Name: @Model.UserProfile.Name</h3>
-                    <p>Email: <a href="mailto:@Model.UserProfile.Email">@Model.UserProfile.Email</a></p>
-                    <p>Phone: @Model.UserProfile.Phone</p>
-                    @* btn-primary provides the colour of the button *@
-                    <button class="btn btn-primary">Update Personal Details</button>
+                <div id="profileInfo">
+                    <h3>Name: <span id="profile-name">@Model.UserProfile.Name</span></h3>
+                    <p>Email: <a id="profile-email" href="mailto:@Model.UserProfile.Email">@Model.UserProfile.Email</a></p>
+                    <p>Phone: <span id="profile-phone">@Model.UserProfile.Phone</span></p>
                 </div>
             </div>
+        </div>
+
+        <div class="section mb-4">
+            <h2>Update Personal Details</h2>
+            <form id="updateProfileForm">
+                <div class="form-group">
+                    <label for="updated-name">Name</label>
+                    <input type="text" class="form-control" id="updated-name" name="name" value="@Model.UserProfile.Name" required>
+                </div>
+                <div class="form-group">
+                    <label for="updated-email">Email</label>
+                    <input type="email" class="form-control" id="updated-email" name="email" value="@Model.UserProfile.Email" required>
+                </div>
+                <div class="form-group">
+                    <label for="updated-phone">Phone</label>
+                    <input type="text" class="form-control" id="updated-phone" name="phone" value="@Model.UserProfile.Phone" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Update</button>
+            </form>
         </div>
 
         <div class="section mb-4">
@@ -111,6 +126,54 @@
         $(document).ready(function () {
             updatePageContents()
         });
+        
+        $('#updateProfileForm').submit(function (e) {
+            e.preventDefault();
+
+            let name = $('#updated-name').val();
+            let phone = $('#updated-phone').val();
+            let email = $('#updated-email').val();
+
+            $.ajax({
+                url: `/api/BProfile/update`,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    Username: '@Model.UserProfile.Username',
+                    Password: '@Model.UserProfile.Password',
+                    Name: name,
+                    Email: email,
+                    Address: '@Model.UserProfile.Address',
+                    Phone: phone,
+                    Picture: '@Model.UserProfile.Picture'
+                }),
+                success: function (response) {
+                    console.log("AJAX response:", response);
+                    updateAdminProfileDisplay();
+                },
+                error: function (error) {
+                    console.error('Error updating profile: ', error);
+                    alert('Error updating profile. Please try again.');
+                }
+            });
+        });
+
+        function updateAdminProfileDisplay() {    
+            $.ajax({
+                url: `/api/BProfile/retrieve/admin`,
+                method: 'GET',
+                success: function (data) {
+                    console.log("AJAX response:", data);
+                    $('#profile-name').text(data.name);
+                    $('#profile-email').text(data.email);
+                    $('#profile-phone').text(data.phone);
+                },
+                error: function (error) {
+                    console.error('Error fetching profile:', error);
+                }
+            });
+   
+        }
 
         function updatePageContents()
         {
