@@ -55,16 +55,22 @@
         <div class="section mb-4">
             <h2>Transaction Management</h2>
             <div class="form-group">
-                <label for="transaction-search">Search Transactions:</label>
-                <input type="text" id="transaction-search" class="form-control" placeholder="Search by ID...">
+                <label for="transaction-search-id">Search Transactions:</label>
+                <input type="number" id="transaction-search-id" class="form-control" placeholder="Search by Transaction ID...">
             </div>
+
+            <div class="form-group">
+                <label><input type="checkbox" id="filter-deposit"> Deposits Only</label>
+                <label><input type="checkbox" id="filter-withdrawal"> Withdrawals Only</label>
+            </div>
+
             <table class="table table-bordered" id="allTransactionsTable">
                 <thead>
                     <tr>
-                        <th>Transaction ID</th>
+                        <th onclick="sortTransactions('transaction_id')">Transaction ID <span>&#x25B2;&#x25BC;</span></th>
                         <th>From Account ID</th>
                         <th>Date</th>
-                        <th>Amount</th>
+                        <th onclick="sortTransactions('amount')">Amount <span>&#x25B2;&#x25BC;</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -90,6 +96,13 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
+        // Store tables
+        let allTransactions = [];
+        let allProfiles = [];
+        let filteredTransactions = [];
+
+        // Track sorting order of transaction ID, default ascending
+        let sortOrder = { ascending: true }; 
 
         $(document).ready(function () {
             updatePageContents()
@@ -118,7 +131,8 @@
                 url: `/api/BProfile/all`,
                 method: 'GET',
                 success: function (data) {
-                    displayProfiles(data);
+                    allProfiles = data
+                    displayProfiles(allProfiles);
                 },
                 error: function (error) {
                     console.error('Error fetching profile history:', error);
@@ -155,7 +169,8 @@
                 url: `/api/BTransaction/all`,
                 method: 'GET',
                 success: function (data) {
-                    displayTransactions(data);
+                    allTransactions = data
+                    displayTransactions(allTransactions);
                 },
                 error: function (error) {
                     console.error('Error fetching transaction history:', error);
@@ -184,7 +199,57 @@
                     </tr>
                 `);
             });
+            filteredTransactions = transactions;
         }
+
+        // Filter function for transaction ID and deposits/withdrawals
+        function filterTransactions() {
+            const searchID = $('#transaction-search-id').val();
+            const isDepositChecked = $('#filter-deposit').is(':checked');
+            const isWithdrawalChecked = $('#filter-withdrawal').is(':checked');
+
+            const filtered = allTransactions.filter(transaction => {
+                const matchesID = !searchID || transaction.transaction_id.toString().startsWith(searchID);
+                const isDeposit = transaction.amount > 0;
+                const isWithdrawal = transaction.amount < 0;
+
+                // Check filters based on checkbox states
+                const matchesDeposit = isDepositChecked ? isDeposit : true;
+                const matchesWithdrawal = isWithdrawalChecked ? isWithdrawal : true;
+
+                return matchesID && matchesDeposit && matchesWithdrawal;
+            });
+
+            displayTransactions(filtered);
+        }
+
+        function sortTransactions(criterion) {
+            sortOrder.ascending = !sortOrder.ascending; // Toggle sorting order
+
+            const sortedTransactions = [...filteredTransactions].sort((a, b) => {
+                if (criterion === 'transaction_id') {
+                    return sortOrder.ascending
+                        ? a.transaction_id - b.transaction_id // Ascending order
+                        : b.transaction_id - a.transaction_id; // Descending order
+                } else if (criterion === 'amount') {
+                    return sortOrder.ascending
+                        ? a.amount - b.amount // Ascending order
+                        : b.amount - a.amount; // Descending order
+                }
+                return 0; // If no valid criterion, no sorting
+            });
+
+            displayTransactions(sortedTransactions);
+        }
+
+
+
+        // Event listener for the search input
+        $('#transaction-search-id').on('input', filterTransactions);
+        // Event listeners for the checkboxes
+        $('#filter-deposit').on('change', filterTransactions);
+        $('#filter-withdrawal').on('change', filterTransactions);
+
         // Logout function
         function logout() {
             $.ajax({
