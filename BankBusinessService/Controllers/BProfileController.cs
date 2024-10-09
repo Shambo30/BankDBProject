@@ -11,10 +11,12 @@ namespace BankBusinessService.Controllers
     {
         private readonly RestClient _client = new RestClient("http://localhost:5282/api");
         private readonly ILogger<BProfileController> _logger;
+        private readonly BLogController _logController;
 
-        public BProfileController(ILogger<BProfileController> logger)
+        public BProfileController(ILogger<BProfileController> logger, BLogController logController)
         {
-            _logger = logger;
+            _logger = logger; // Console based logger
+            _logController = logController; // Our database logger
         }
 
         [HttpPost("create")]
@@ -27,6 +29,10 @@ namespace BankBusinessService.Controllers
 
                 var response = await _client.ExecuteAsync(request);
                 _logger.LogInformation($"Creating profile for username: {profile.Username}, email: {profile.Email}, name: {profile.Name}");
+
+                string details = profile.isAdmin ? "Admin created a profile" : $"User created their own profile";
+                await _logController.LogAction(profile.Username, "Profile Create", details);
+
 
                 return Ok(response.Content);
             }
@@ -50,6 +56,11 @@ namespace BankBusinessService.Controllers
                     var profile = JsonConvert.DeserializeObject<Profile>(response.Content);
                     _logger.LogInformation($"Retrieving profile for username: {username}");
 
+                    string details = profile.isAdmin ? $"Admin retrieving profile: {username}" : $"User retrieving their own profile: {username}";
+                    string user = profile.isAdmin ? "Admin" : $"{profile.Username}";
+                    await _logController.LogAction(profile.Username, "Profile Retrieve", details);
+
+
                     return Ok(profile);
                 }
                 else
@@ -65,16 +76,24 @@ namespace BankBusinessService.Controllers
         }
 
 
-        [HttpPost("update")]
+        [HttpPut("update")]
         public async Task<IActionResult> UpdateProfile([FromBody] Profile profile)
         {
             try
             {
-                var request = new RestRequest("Profile/update", Method.Post);
+                _logger.LogInformation($"Preparing to send update request to data layer for profile: {profile.Username}");
+                _logger.LogInformation($"Data being sent - Name: {profile.Name}, Email: {profile.Email}, Address: {profile.Address}, Phone: {profile.Phone}, Picture: {profile.Picture}, Password: {profile.Password}");
+
+                var request = new RestRequest("Profile/update", Method.Put);
                 request.AddJsonBody(profile);
 
                 var response = await _client.ExecuteAsync(request);
-                _logger.LogInformation($"Updating profile for username: {profile.Username}, email: {profile.Email}, name: {profile.Name}");
+
+                _logger.LogInformation($"Data layer response status: {response.StatusCode}");
+                _logger.LogInformation($"Data layer response content: {response.Content}");
+
+                string details = profile.isAdmin ? $"Admin updated profile for user: {profile.Username}" : $"User updated their own profile";
+                await _logController.LogAction(profile.Username, "Profile Update", details);
 
                 return Ok(response.Content);
             }
@@ -93,6 +112,9 @@ namespace BankBusinessService.Controllers
                 var request = new RestRequest($"Profile/delete/{username}", Method.Post);
                 var response = await _client.ExecuteAsync(request);
                 _logger.LogInformation($"Deleting profile for username: {username}");
+
+                string details = $"Admin deleted profile: {username}";
+                await _logController.LogAction("Admin", $"Profile Delete: {username}", details);
 
                 return Ok(response.Content);
             }

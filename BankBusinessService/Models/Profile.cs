@@ -9,6 +9,7 @@
         public string Address { get; set; }
         public string Phone { get; set; }
         public string Picture { get; set; }
+        public bool isAdmin { get; set; } //Added to handle admin logging
 
     }
 }
