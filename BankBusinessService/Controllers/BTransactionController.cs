@@ -65,12 +65,19 @@ namespace BankBusinessService.Controllers
                 var request = new RestRequest($"transaction/history/{accountId}", Method.Get);
                 var response = await _client.ExecuteAsync(request);
 
-                if (response.IsSuccessful && !string.IsNullOrEmpty(response.Content))
+                if (response.IsSuccessful)
                 {
-                    var transactions = JsonConvert.DeserializeObject<List<Transaction>>(response.Content);
-                    _logger.LogInformation($"Retrieving transaction history for account number: {accountId}");
-
-                    return Ok(transactions);
+                    if (!string.IsNullOrEmpty(response.Content))
+                    {
+                        var transactions = JsonConvert.DeserializeObject<List<Transaction>>(response.Content);
+                        _logger.LogInformation($"Retrieving transaction history for account number: {accountId}");
+                        return Ok(transactions);
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"No transaction history found for account number: {accountId}");
+                        return NoContent(); // Return 204 No Content if the account exists but has no transactions
+                    }
                 }
                 else
                 {
@@ -83,6 +90,8 @@ namespace BankBusinessService.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+
+
 
         [HttpPost("transfer")]
         public async Task<IActionResult> TransferFunds([FromBody] TransactionRequest transactionRequest)

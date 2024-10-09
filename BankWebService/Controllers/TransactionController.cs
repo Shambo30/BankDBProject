@@ -67,7 +67,7 @@ namespace BankWebService.Controllers
                 var transactions = _dataAccess.GetTransactionsByAccountId(accountNumber);
                 if (transactions == null || transactions.Count == 0)
                 {
-                    return NotFound("No transactions found for this account.");
+                    return NoContent();
                 }
                 return Ok(transactions);
             }
