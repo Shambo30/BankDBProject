@@ -18,7 +18,13 @@ namespace BankBusinessService.Controllers
             string username = HttpContext.Session.GetString("Username");
             if (string.IsNullOrEmpty(username))
             {
-                return RedirectToAction("UserLogin", "Login");
+                return RedirectToAction("AdminLogin", "Login");
+            }
+
+            // Check for cookies unique Session ID
+            if (!HttpContext.Request.Cookies.ContainsKey("SessionID"))
+            {
+                return RedirectToAction("AdminLogin", "Login"); // Redirect to login if not found
             }
 
             // Fetch the user profile and account details from the business layer
