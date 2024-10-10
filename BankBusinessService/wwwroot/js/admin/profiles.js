@@ -74,7 +74,8 @@ function displayProfiles(profiles) {
                             <td>${profile.address}</td>
                             <td>${profile.phone}</td>
                             <td>
-                                <button class="btn btn-primary" onclick="document.getElementById('profileInfo').scrollIntoView({ behavior: 'smooth' });">Edit</button>
+                                <button class="btn btn-primary" onclick="document.getElementById('admin-dash').scrollIntoView({ behavior: 'smooth' });">View</button>
+                                <button class="btn btn-secondary" onclick="document.getElementById('profileInfo').scrollIntoView({ behavior: 'smooth' });">Edit</button>
                             </td>
                         </tr>
                     `);
@@ -88,7 +89,8 @@ function displayProfiles(profiles) {
                             <td>${profile.address}</td>
                             <td>${profile.phone}</td>
                             <td>
-                                <button class="btn btn-primary" onclick="selectUserProfile('${profile.username}')">Edit</button>
+                                <button class="btn btn-primary" onclick="selectUserAccounts('${profile.username}')">View Accounts</button>
+                                <button class="btn btn-secondary" onclick="selectUserProfile('${profile.username}')">Edit</button>
                                 <button class="btn btn-danger" onclick="deleteProfile('${profile.username}')">Delete</button>
                             </td>
                         </tr>

@@ -12,7 +12,7 @@
     <div class="container mt-5">
         <h1>Admin Dashboard</h1>
         @* Margin-bottom 4 (high, but little bit less spacing) *@
-        <div class="section mb-4">
+        <div class="section mb-4" id="admin-dash">
             <h2>Admin Profile Information</h2>
             <div class="d-flex align-items-center">
                 <div id="profileInfo">
@@ -105,6 +105,24 @@
                 </thead>
                 <tbody>
                     <!-- Javascript injects code here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Account Summary (hidden by default) -->
+        <div class="section mb-4" id="accountSummary" style="display: none;">
+            <h2>Selected Accounts</h2>
+            <button class="btn btn-primary" id="addAccount">Add New Account</button>
+            <table class="table table-bordered" id="accountTable">
+                <thead>
+                    <tr>
+                        <th>Account Number</th>
+                        <th>Balance</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Javascript injected here -->
                 </tbody>
             </table>
         </div>
@@ -213,6 +231,9 @@
 
     <!-- Handles all profile-related logic (creating, retrieving, updating, deleting... ) -->
     <script src="~/js/admin/profiles.js"></script>
+    
+    <!-- Handles all account-related logic (creating, retrieving, updating, deleting... ) -->
+    <script src="~/js/admin/account.js"></script>
 
     <!-- Handles admin-related logging -->
     <script src="~/js/admin/logging.js"></script>
