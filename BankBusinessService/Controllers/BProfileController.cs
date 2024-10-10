@@ -30,9 +30,13 @@ namespace BankBusinessService.Controllers
                 var response = await _client.ExecuteAsync(request);
                 _logger.LogInformation($"Creating profile for username: {profile.Username}, email: {profile.Email}, name: {profile.Name}");
 
-                string details = profile.isAdmin ? "Admin created a profile" : $"User created their own profile";
-                await _logController.LogAction(profile.Username, "Profile Create", details);
+                if (!response.IsSuccessful)
+                {
+                    return BadRequest(response.Content); // Handles if username exists already
+                }
 
+                string details = profile.Username == "admin" ? "Admin created a profile" : $"User created their own profile";
+                await _logController.LogAction(profile.Username, "Profile Create", details);
 
                 return Ok(response.Content);
             }
@@ -56,8 +60,8 @@ namespace BankBusinessService.Controllers
                     var profile = JsonConvert.DeserializeObject<Profile>(response.Content);
                     _logger.LogInformation($"Retrieving profile for username: {username}");
 
-                    string details = profile.isAdmin ? $"Admin retrieving profile: {username}" : $"User retrieving their own profile: {username}";
-                    string user = profile.isAdmin ? "Admin" : $"{profile.Username}";
+                    string details = profile.Username == "admin" ? $"Admin retrieving profile: {username}" : $"User retrieving their own profile: {username}";
+                    string user = profile.Username == "admin" ? "Admin" : $"{profile.Username}";
                     await _logController.LogAction(profile.Username, "Profile Retrieve", details);
 
 
@@ -92,7 +96,7 @@ namespace BankBusinessService.Controllers
                 _logger.LogInformation($"Data layer response status: {response.StatusCode}");
                 _logger.LogInformation($"Data layer response content: {response.Content}");
 
-                string details = profile.isAdmin ? $"Admin updated profile for user: {profile.Username}" : $"User updated their own profile";
+                string details = profile.Username == "admin" ? $"Admin updated profile for user: {profile.Username}" : $"User updated their own profile";
                 await _logController.LogAction(profile.Username, "Profile Update", details);
 
                 return Ok(response.Content);

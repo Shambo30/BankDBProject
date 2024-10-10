@@ -81,7 +81,7 @@ namespace BankWebService.Controllers
             try
             {
                 _dataAccess.UpdateProfile(profile);
-                return Ok($"Profile {profile.Username} updated successfully");
+                return Ok(profile);
             }
             catch (InvalidOperationException ex)
             {

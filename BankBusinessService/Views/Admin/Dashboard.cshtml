@@ -251,7 +251,7 @@
                     },
                     error: function (error) {
                         console.error('Error updating profile: ', error);
-                        alert('Error updating profile. Please try again.');
+                        alert('Error updating profile: ' + error.responseText);
                     }
                 });
             }
@@ -301,7 +301,7 @@
                     },
                     error: function (error) {
                         console.error('Error updating profile: ', error);
-                        alert('Error updating profile. Please try again.');
+                        alert('Error updating profile: ' + error.responseText);
                     }
                 });
             }

@@ -8,7 +8,6 @@ $('#newUserForm').submit(function (e) {
     e.preventDefault();
     let selectedUser = $('#newUser-uname').val();
     if (confirm(`Are you sure you want to create a new profile for ${selectedUser}?`)) {
-
         let fullname = $('#newUser-fullname').val();
         let email = $('#newUser-email').val();
         let password = $('#newUser-password').val();
@@ -35,12 +34,10 @@ $('#newUserForm').submit(function (e) {
                 $('#newUser').hide();
                 // navigate to profiles table
                 document.getElementById('allProfilesTable').scrollIntoView({ behavior: 'smooth' });
-
-
             },
             error: function (error) {
-                console.error('Error updating profile: ', error);
-                alert('Error updating profile. Please try again.');
+                console.error('Error creating profile: ', error);
+                alert('Error creating profile: ' + error.responseText);
             }
         });
     }
