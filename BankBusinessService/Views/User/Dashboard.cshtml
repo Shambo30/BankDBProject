@@ -165,11 +165,12 @@
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- JS for transaction logic -->
+    <script src="~/js/user/transactions.js"></script>
+    <!-- JS for core app logic (refreshing + logout) -->
+    <script src="~/js/user/app.js"></script>
+    <!-- JS for code that requires Razor components -->
     <script>
-        /* Javascript section */
-
-        let currentAccountNumber = null; // Global variable to store the selected account number
-
         // AJAX request to handle money transfer
         $('#moneyTransferForm').submit(function (e) {
             e.preventDefault(); // Prevent the form from submitting traditionally
@@ -222,10 +223,10 @@
             let username = '@Model.UserProfile.Username'
 
             // Check password validity
-            if (newPassword && confirmPassword) { // Passwords provided... 
+            if (newPassword && confirmPassword) { // Passwords provided...
                 if (newPassword !== confirmPassword) { // BUT don't match
                     alert('Error: Passwords do not match. Please try again.');
-                    return; 
+                    return;
                 }
             } else if (newPassword || confirmPassword) { // If only one password is entered...
                 alert('Error: Please fill in both password fields.');
@@ -262,174 +263,6 @@
                 }
             });
         });
-
-        function refreshProfileDetails(username)
-        {
-            $.ajax({
-                url: `/api/BProfile/retrieve/${username}`, // Endpoint to get the user profile
-                method: 'GET',
-                success: function (data) {
-
-                    // Update the profile information in the DOM
-                    $('#profilePicture').attr('src', data.picture);
-                    $('#profileName').text(data.name);
-                    $('#profileEmail').attr('href', 'mailto:' + data.email).text(data.email);
-                    $('#profilePhone').text(data.phone);
-                    $('#profileAddress').text(data.address);
-                    // scroll updated profile into view
-                    document.getElementById('user-dash').scrollIntoView({ behavior: 'smooth' });
-                },
-                error: function (xhr) {
-                    console.error('Error fetching profile information:', xhr);
-                    alert('Error fetching profile information. Please try again.');
-                }
-            });
-
-        }
-
-        function refreshAccountBalances(username) {
-            $.ajax({
-                url: `/api/BAccount/retrieveByUsername/${username}`,
-                method: 'GET',
-                success: function (data) {
-                    // Your Accounts
-                    let accountTable = $('#accountSummaryTable tbody');
-                    // Selectable account list
-                    let senderAccountSelect = $('#sender-account');
-                    // transaction history table
-                    let transactionTable = $('#transactionHistoryTable tbody');
-
-                    // Clear all existing table rows and select options
-                    accountTable.empty();
-                    senderAccountSelect.empty();
-                    transactionTable.empty();
-
-
-                    // Append the default option for the select
-                    senderAccountSelect.append('<option value="">Select your account</option>');
-
-                    data.forEach(account => {
-                        // Append rows to the account summary table
-                        accountTable.append(`
-                            <tr>
-                                <td>${account.account_number}</td>
-                                <td>${account.balance}</td>
-                                <td><button class="btn btn-secondary" onclick="viewTransactionHistory(${account.account_number})">View Transaction History</button></td>
-                            </tr>
-                        `);
-
-                        // Append options to the sender account select
-                        senderAccountSelect.append(`
-                            <option value="${account.account_number}">Account: ${account.account_number} - Balance: ${account.balance}</option>
-                        `);
-                    });
-                },
-                error: function (error) {
-                    console.error('Error refreshing account balances:', error);
-                }
-            });
-        }
-
-
-        // AJAX request to view transaction history
-        function viewTransactionHistory(accountNumber) {
-            currentAccountNumber = accountNumber; // Store the selected account number globally
-            $('#accountNumberLabel').text(accountNumber); // Update the label with the selected account number
-
-            $.ajax({
-                url: `/api/BTransaction/history/${accountNumber}`,
-                method: 'GET',
-                success: function (data) {
-                    displayTransactionHistory(data); // Display the transaction history for the selected account
-                },
-                error: function (error) {
-                    console.error('Error fetching transaction history:', error);
-                }
-            });
-        }
-
-
-        // AJAX request to filter transaction history by date range
-        function filterTransactions(accountNumber) {
-            let startDate = $('#startDate').val();
-            let endDate = $('#endDate').val();
-
-            // Validate that both an account number and dates are selected
-            if (!accountNumber) {
-                alert('Please select an account to filter the transactions.');
-                return;
-            }
-
-            if (!startDate || !endDate) {
-                alert('Please enter both a start date and an end date to filter the transactions.');
-                return;
-            }
-
-            // Reformat dates to yyyy-mm-dd to ensure consistency
-            startDate = new Date(startDate).toISOString().split('T')[0];
-            endDate = new Date(endDate).toISOString().split('T')[0];
-
-            console.log(`Filtering transactions for account: ${accountNumber} from ${startDate} to ${endDate}`);
-
-            $.ajax({
-                url: `/api/BTransaction/history/filter/${accountNumber}`,
-                method: 'GET',
-                data: {
-                    startDate: startDate,
-                    endDate: endDate
-                },
-                success: function (data) {
-                    console.log('Filtered transactions data:', data);
-                    displayTransactionHistory(data);
-
-                    if (data.length === 0) {
-                        $('#transactionHistoryTable tbody').html('<tr><td colspan="3" class="text-center">No transaction history found between the selected dates.</td></tr>');
-                    }
-                },
-                error: function (error) {
-                    console.error('Error fetching filtered transactions:', error);
-                }
-            });
-        }
-
-
-        // Function to display transaction history dynamically
-        function displayTransactionHistory(transactions) {
-            let transactionTable = $('#transactionHistoryTable tbody');
-            transactionTable.empty();
-            transactions.forEach(transaction => {
-                const formattedDate = new Date(transaction.transaction_date).toLocaleDateString('en-GB'); // Formats the date to dd/mm/yyyy
-
-                const formattedAmount = new Intl.NumberFormat('en-AU', {
-                    style: 'currency',
-                    currency: 'AUD',
-                }).format(transaction.amount);
-
-                transactionTable.append(`
-                    <tr>
-                        <td>${formattedDate}</td>
-                        <td>${transaction.transaction_id}</td>
-                        <td>${formattedAmount}</td>
-                    </tr>
-                `);
-            });
-        }
-
-        // Logout function
-        function logout() {
-            $.ajax({
-                url: '/Login/UserLogout',
-                method: 'POST',
-                success: function () {
-                    window.location.href = '/Login/UserLogin';
-                    console.log('Logging out...')
-                },
-                error: function (error) {
-                    alert('Error logging out: ', error);
-                }
-            });
-        }
     </script>
-
 </body>
 </html>
