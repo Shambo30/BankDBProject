@@ -449,6 +449,31 @@ namespace DatabaseLib
             }
         }
 
+        public List<Transaction> GetFilteredTransactions(int accountId, DateTime startDate, DateTime endDate)
+        {
+            try
+            {
+                using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+                {
+                    return cnn.Query<Transaction>(
+                        "SELECT * FROM transactions WHERE account_number = @account_number AND DATE(transaction_date) BETWEEN @startDate AND @endDate ORDER BY transaction_date DESC",
+                        new { account_number = accountId, startDate = startDate.ToString("yyyy-MM-dd"), endDate = endDate.ToString("yyyy-MM-dd") }
+                    ).ToList();
+                }
+            }
+            catch (SQLiteException ex)
+            {
+                Console.WriteLine($"SQLite error occurred: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving the filtered transaction history: {ex.Message}");
+                throw;
+            }
+        }
+
+
         public void ClearDatabase()
         {
             try
@@ -479,6 +504,60 @@ namespace DatabaseLib
             }
 
         }
+
+        //Handles logging for admin view
+        public void LogActivity(ActivityLog logEntry)
+        {
+            try
+            {
+                using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+                {
+                    string sql = @"INSERT INTO activity_logs (username, action, details, timestamp) 
+                           VALUES (@Username, @Action, @Details, @Timestamp)";
+
+                    cnn.Execute(sql, new
+                    {
+                        logEntry.Username,
+                        logEntry.Action,
+                        logEntry.Details,
+                        Timestamp = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")
+                    });
+                }
+            }
+            catch (SQLiteException ex)
+            {
+                Console.WriteLine($"SQLite error occurred: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while logging activity: {ex.Message}");
+                throw;
+            }
+        }
+
+        public List<ActivityLog> GetAllActivityLogs()
+        {
+            try
+            {
+                using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+                {
+                    return cnn.Query<ActivityLog>("SELECT * FROM activity_logs ORDER BY Timestamp DESC").ToList();
+                }
+            }
+            catch (SQLiteException ex)
+            {
+                Console.WriteLine($"SQLite error occurred: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving activity logs: {ex.Message}");
+                throw;
+            }
+        }
+
+
 
         private string LoadConnectionString(string id = "DefaultConnection")
         {

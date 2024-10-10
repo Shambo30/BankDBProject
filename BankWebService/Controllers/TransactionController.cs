@@ -67,7 +67,7 @@ namespace BankWebService.Controllers
                 var transactions = _dataAccess.GetTransactionsByAccountId(accountNumber);
                 if (transactions == null || transactions.Count == 0)
                 {
-                    return NotFound("No transactions found for this account.");
+                    return NoContent();
                 }
                 return Ok(transactions);
             }
@@ -76,6 +76,26 @@ namespace BankWebService.Controllers
                 return StatusCode(500, $"Error: {ex.Message}");
             }
         }
+
+        [HttpGet("history/filter/{accountNumber}")]
+        public IActionResult GetFilteredTransactionHistory(int accountNumber, DateTime startDate, DateTime endDate)
+        {
+            try
+            {
+                var transactions = _dataAccess.GetFilteredTransactions(accountNumber, startDate, endDate);
+                if (transactions == null || transactions.Count == 0)
+                {
+                    // Return an empty list with a 200 OK status if no transactions are found
+                    return Ok(new List<Transaction>());
+                }
+                return Ok(transactions);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error: {ex.Message}");
+            }
+        }
+
 
         // retrieve all transactions
         [HttpGet("all")]

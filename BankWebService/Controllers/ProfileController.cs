@@ -75,7 +75,7 @@ namespace BankWebService.Controllers
             }
         }
 
-        [HttpPost("update")]
+        [HttpPut("update")]
         public IActionResult UpdateProfile(Profile profile)
         {
             try

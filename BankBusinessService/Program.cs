@@ -9,6 +9,8 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<BProfileController>();
 builder.Services.AddScoped<BAccountController>();
 builder.Services.AddScoped<BTransactionController>();
+builder.Services.AddScoped<BLogController>();
+
 
 // Enable session state in your application
 builder.Services.AddDistributedMemoryCache();

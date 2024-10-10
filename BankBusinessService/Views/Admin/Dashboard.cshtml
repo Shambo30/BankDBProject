@@ -170,13 +170,29 @@
                 </tbody>
             </table>
         </div>
-       
 
+
+        <!-- Activity Logs -->
         <div class="section mb-4">
-            <h2>Security and Access Control</h2>
-            <p>Logs and audit trails for tracking admin activities and system changes will be displayed here.</p>
-            <button class="btn btn-info">View Logs</button>
+            <h2>
+                Activity Logs
+                <button class="btn btn-info btn-sm ml-2" onclick="refreshActivityLogs()">Refresh Logs</button>
+            </h2>
+            <table class="table table-bordered" id="activityLogsTable">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Action</th>
+                        <th>Details</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Javascript will inject the activity logs here -->
+                </tbody>
+            </table>
         </div>
+
 
         <div class="section mb-4">
             <h2>Logout</h2>
@@ -231,7 +247,7 @@
 
                 $.ajax({
                     url: `/api/BProfile/update`,
-                    method: 'POST',
+                    method: 'PUT',
                     contentType: 'application/json',
                     data: JSON.stringify({
                         Username: '@Model.UserProfile.Username',
@@ -240,7 +256,8 @@
                         Email: email,
                         Address: '@Model.UserProfile.Address',
                         Phone: phone,
-                        Picture: '@Model.UserProfile.Picture'
+                        Picture: '@Model.UserProfile.Picture',
+                        isAdmin: true
                     }),
                     success: function (response) {
                         console.log("AJAX response:", response);
@@ -254,19 +271,30 @@
             }
         });
 
-        $('#updateUserForm').submit(function (e) {
+            $('#updateUserForm').submit(function (e) {
             e.preventDefault();
             if (confirm(`Are you sure you want to update the profile for ${selectedUser}?`)) {
-            
-                let fullname =$('#user-fullname').val();
+
+                let fullname = $('#user-fullname').val();
                 let email = $('#user-email').val();
                 let password = $('#user-password').val();
                 let phone = $('#user-phone').val();
                 let address = $('#user-address').val();
 
+                // Retain the current profile picture if no new picture is provided
+                let picture = '@Model.UserProfile.Picture'; // This should default to the current picture
+                if (!picture || picture === "404") {
+                    picture = '@Model.UserProfile.Picture'; // Keep the existing picture in case of 404 or missing value
+                }
+
+                // Check if the password field is empty, if so, keep the original password
+                if (!password) {
+                    password = '@Model.UserProfile.Password'; // Ensure this value is replaced with the current password
+                }
+
                 $.ajax({
                     url: `/api/BProfile/update`,
-                    method: 'POST',
+                    method: 'PUT',
                     contentType: 'application/json',
                     data: JSON.stringify({
                         Username: selectedUser,
@@ -275,17 +303,14 @@
                         Email: email,
                         Address: address,
                         Phone: phone,
-                        Picture: "404"
+                        Picture: picture, // Using a placeholder or retaining the current image
+                        isAdmin: true
                     }),
                     success: function (response) {
                         console.log("AJAX response:", response);
                         retrieveProfilesList();
-                        // hide user update form
                         $('#selectUserUpdate').hide();
-                        // navigate to profiles table
                         document.getElementById('allProfilesTable').scrollIntoView({ behavior: 'smooth' });
-                    
-                    
                     },
                     error: function (error) {
                         console.error('Error updating profile: ', error);
@@ -294,6 +319,7 @@
                 });
             }
         });
+
 
         $('#newUserForm').submit(function (e) {
             e.preventDefault();
@@ -358,6 +384,51 @@
             });
    
         }
+
+        $(document).ready(function () {
+            updatePageContents();
+            retrieveActivityLogs(); // Fetch activity logs when the page loads
+        });
+
+        function refreshActivityLogs() {
+            retrieveActivityLogs(); // Fetch and update the activity logs when the button is clicked
+        }
+
+        // Function to retrieve activity logs from the server
+        function retrieveActivityLogs() {
+            $.ajax({
+                url: `/api/blog/all`, // Updated to match your controller's route
+                method: 'GET',
+                success: function (data) {
+                    displayActivityLogs(data); // Display the logs on the page
+                },
+                error: function (error) {
+                    console.error('Error fetching activity logs:', error);
+                    alert('Error fetching activity logs. Please try again.');
+                }
+            });
+        }
+
+        // Function to display activity logs dynamically
+        function displayActivityLogs(logs) {
+            let logsTable = $('#activityLogsTable tbody');
+            logsTable.empty();
+
+            logs.forEach(log => {
+                // Ensure the timestamp is formatted correctly for display
+                const formattedTimestamp = log.timestamp ? new Date(log.timestamp).toLocaleString('en-GB') : 'N/A';
+
+                logsTable.append(`
+                    <tr>
+                        <td>${log.username}</td>
+                        <td>${log.action}</td>
+                        <td>${log.details}</td>
+                        <td>${formattedTimestamp}</td>
+                    </tr>
+                `);
+            });
+        }
+
 
         function retrieveProfilesList() {
             $.ajax({

@@ -65,12 +65,19 @@ namespace BankBusinessService.Controllers
                 var request = new RestRequest($"transaction/history/{accountId}", Method.Get);
                 var response = await _client.ExecuteAsync(request);
 
-                if (response.IsSuccessful && !string.IsNullOrEmpty(response.Content))
+                if (response.IsSuccessful)
                 {
-                    var transactions = JsonConvert.DeserializeObject<List<Transaction>>(response.Content);
-                    _logger.LogInformation($"Retrieving transaction history for account number: {accountId}");
-
-                    return Ok(transactions);
+                    if (!string.IsNullOrEmpty(response.Content))
+                    {
+                        var transactions = JsonConvert.DeserializeObject<List<Transaction>>(response.Content);
+                        _logger.LogInformation($"Retrieving transaction history for account number: {accountId}");
+                        return Ok(transactions);
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"No transaction history found for account number: {accountId}");
+                        return NoContent(); // Return 204 No Content if the account exists but has no transactions
+                    }
                 }
                 else
                 {
@@ -83,6 +90,43 @@ namespace BankBusinessService.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+
+        [HttpGet("history/filter/{accountId}")]
+        public async Task<IActionResult> GetFilteredTransactionHistory(int accountId, DateTime startDate, DateTime endDate)
+        {
+            try
+            {
+                _logger.LogInformation($"Attempting filter of {accountId} with dates {startDate} and {endDate}");
+                var restRequest = new RestRequest($"transaction/history/filter/{accountId}?startDate={startDate:yyyy-MM-dd}&endDate={endDate:yyyy-MM-dd}", Method.Get);
+                var response = await _client.ExecuteAsync(restRequest);
+
+                if (response.IsSuccessful && !string.IsNullOrEmpty(response.Content))
+                {
+                    var transactions = JsonConvert.DeserializeObject<List<Transaction>>(response.Content);
+
+                    // Handle the case when no transactions are found
+                    if (transactions == null || transactions.Count == 0)
+                    {
+                        _logger.LogInformation($"No transactions found for account number: {accountId} between {startDate} and {endDate}");
+                        return Ok(new List<Transaction>()); // Return an empty list with 200 OK status
+                    }
+
+                    _logger.LogInformation($"Retrieving filtered transaction history for account number: {accountId} from {startDate} to {endDate}");
+                    return Ok(transactions);
+                }
+                else
+                {
+                    _logger.LogInformation("Line 119 something wrong in business controller interaction");
+                    return StatusCode((int)response.StatusCode, response.ErrorMessage);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving filtered transaction history");
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
 
         [HttpPost("transfer")]
         public async Task<IActionResult> TransferFunds([FromBody] TransactionRequest transactionRequest)
