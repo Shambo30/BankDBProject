@@ -14,20 +14,20 @@
 <body>
     <div class="container mt-5">
         <h1>User Dashboard</h1>
-
         <!-- User Profile Information -->
-        <div class="section mb-4">
+        <div class="section mb-4" id="user-dash">
             <h2>Welcome, @Model.UserProfile.Username!</h2>
             <div class="d-flex align-items-center">
-                <img src="@Model.UserProfile.Picture" alt="Profile Picture" width="100" height="100" class="rounded-circle mr-3">
+                <img src="@Model.UserProfile.Picture" alt="Profile Picture" width="100" height="100" class="rounded-circle mr-3" id="profilePicture">
                 <div class="ml-3">
-                    <h3>@Model.UserProfile.Name</h3>
-                    <p>Email: <a href="mailto:@Model.UserProfile.Email">@Model.UserProfile.Email</a></p>
-                    <p>Phone: @Model.UserProfile.Phone</p>
-                    <p>Address: @Model.UserProfile.Address</p>
+                    <h3 id="profileName">@Model.UserProfile.Name</h3>
+                    <p>Email: <a href="mailto:@Model.UserProfile.Email" id="profileEmail">@Model.UserProfile.Email</a></p>
+                    <p>Phone: <span id="profilePhone">@Model.UserProfile.Phone</span></p>
+                    <p>Address: <span id="profileAddress">@Model.UserProfile.Address</span></p>
                 </div>
             </div>
         </div>
+
 
         <!-- Update Personal Details -->
         <div class="section mb-4">
@@ -214,13 +214,28 @@
         $('#updatePersonalDetailsForm').submit(function (e) {
             e.preventDefault(); // Prevent the form from submitting traditionally
 
-            // Retrieve the existing password from the session or current data
+            // Retrieve the passwords
             let existingPassword = '@Model.UserProfile.Password';
+            let newPassword = $('#password').val();
+            let confirmPassword = $('#confirmPassword').val();
 
-            // Gather form data into a JSON object
+            let username = '@Model.UserProfile.Username'
+
+            // Check password validity
+            if (newPassword && confirmPassword) { // Passwords provided... 
+                if (newPassword !== confirmPassword) { // BUT don't match
+                    alert('Error: Passwords do not match. Please try again.');
+                    return; 
+                }
+            } else if (newPassword || confirmPassword) { // If only one password is entered...
+                alert('Error: Please fill in both password fields.');
+                return; // Stops the update/refresh process
+            }
+
+            // Use the current password if no new password is entered
             let profileData = {
                 Username: '@Model.UserProfile.Username',  // Ensures we're updating the current user
-                Password: $('#updatePassword').val() || existingPassword,  // Use the current password if no new password is entered
+                Password: newPassword || existingPassword,  // Use the current password if no new password is entered
                 Name: $('#name').val(),
                 Email: $('#email').val(),
                 Address: $('#address').val(),
@@ -235,9 +250,11 @@
                 method: 'PUT',
                 contentType: 'application/json',
                 data: JSON.stringify(profileData),
-                success: function () {
+                success: function (response) {
+                    console.log('AJAX Response: ', response);
                     alert('Profile updated successfully!');
-                    location.reload(); // Reload the page to reflect updated profile details
+                    // refresh admin profile
+                    refreshProfileDetails(username)
                 },
                 error: function (xhr) {
                     let errorMessage = xhr.responseText || 'An error occurred during the profile update.';
@@ -246,16 +263,40 @@
             });
         });
 
+        function refreshProfileDetails(username)
+        {
+            $.ajax({
+                url: `/api/BProfile/retrieve/${username}`, // Endpoint to get the user profile
+                method: 'GET',
+                success: function (data) {
 
+                    // Update the profile information in the DOM
+                    $('#profilePicture').attr('src', data.picture);
+                    $('#profileName').text(data.name);
+                    $('#profileEmail').attr('href', 'mailto:' + data.email).text(data.email);
+                    $('#profilePhone').text(data.phone);
+                    $('#profileAddress').text(data.address);
+                    // scroll updated profile into view
+                    document.getElementById('user-dash').scrollIntoView({ behavior: 'smooth' });
+                },
+                error: function (xhr) {
+                    console.error('Error fetching profile information:', xhr);
+                    alert('Error fetching profile information. Please try again.');
+                }
+            });
 
+        }
 
         function refreshAccountBalances(username) {
             $.ajax({
                 url: `/api/BAccount/retrieveByUsername/${username}`,
                 method: 'GET',
                 success: function (data) {
+                    // Your Accounts
                     let accountTable = $('#accountSummaryTable tbody');
+                    // Selectable account list
                     let senderAccountSelect = $('#sender-account');
+                    // transaction history table
                     let transactionTable = $('#transactionHistoryTable tbody');
 
                     // Clear all existing table rows and select options
@@ -288,6 +329,7 @@
                 }
             });
         }
+
 
         // AJAX request to view transaction history
         function viewTransactionHistory(accountNumber) {
