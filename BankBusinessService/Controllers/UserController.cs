@@ -19,7 +19,7 @@ namespace BankBusinessService.Controllers
         public async Task<IActionResult> Dashboard()
         {
             // Retrieve username from session
-            string username = HttpContext.Session.GetString("Username");
+            string username = HttpContext?.Session?.GetString("Username");
             
             if (string.IsNullOrEmpty(username))
             {

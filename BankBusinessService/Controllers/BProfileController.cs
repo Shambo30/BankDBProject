@@ -24,6 +24,8 @@ namespace BankBusinessService.Controllers
         {
             try
             {
+                string logName = HttpContext.Session.GetString("Username");
+
                 var request = new RestRequest("Profile/create", Method.Post);
                 request.AddJsonBody(profile);
 
@@ -35,8 +37,8 @@ namespace BankBusinessService.Controllers
                     return BadRequest(response.Content); // Handles if username exists already
                 }
 
-                string details = profile.Username == "admin" ? "Admin created a profile" : $"User created their own profile";
-                await _logController.LogAction(profile.Username, "Profile Create", details);
+                string details = logName == "admin" ? "Admin created a profile" : $"User created their own profile";
+                await _logController.LogAction(logName, "Profile Create", details);
 
                 return Ok(response.Content);
             }
@@ -52,6 +54,8 @@ namespace BankBusinessService.Controllers
         {
             try
             {
+                string logName = HttpContext?.Session?.GetString("Username");
+
                 var request = new RestRequest($"profile/retrieve/{username}", Method.Get);
                 var response = await _client.ExecuteAsync(request);
 
@@ -60,9 +64,8 @@ namespace BankBusinessService.Controllers
                     var profile = JsonConvert.DeserializeObject<Profile>(response.Content);
                     _logger.LogInformation($"Retrieving profile for username: {username}");
 
-                    string details = profile.Username == "admin" ? $"Admin retrieving profile: {username}" : $"User retrieving their own profile: {username}";
-                    string user = profile.Username == "admin" ? "Admin" : $"{profile.Username}";
-                    await _logController.LogAction(profile.Username, "Profile Retrieve", details);
+                    string details = logName == "admin" ? $"Admin retrieving profile: {username}" : $"User retrieving their own profile: {username}";
+                    await _logController.LogAction(logName, "Profile Retrieve", details);
 
 
                     return Ok(profile);
@@ -85,6 +88,8 @@ namespace BankBusinessService.Controllers
         {
             try
             {
+                string logName = HttpContext.Session.GetString("Username");
+
                 _logger.LogInformation($"Preparing to send update request to data layer for profile: {profile.Username}");
                 _logger.LogInformation($"Data being sent - Name: {profile.Name}, Email: {profile.Email}, Address: {profile.Address}, Phone: {profile.Phone}, Picture: {profile.Picture}, Password: {profile.Password}");
 
@@ -93,11 +98,8 @@ namespace BankBusinessService.Controllers
 
                 var response = await _client.ExecuteAsync(request);
 
-                _logger.LogInformation($"Data layer response status: {response.StatusCode}");
-                _logger.LogInformation($"Data layer response content: {response.Content}");
-
-                string details = profile.Username == "admin" ? $"Admin updated profile for user: {profile.Username}" : $"User updated their own profile";
-                await _logController.LogAction(profile.Username, "Profile Update", details);
+                string details = logName == "admin" ? $"Admin updated profile for user: {profile.Username}" : $"User updated their own profile";
+                await _logController.LogAction(logName, "Profile Update", details);
 
                 return Ok(response.Content);
             }
@@ -113,12 +115,14 @@ namespace BankBusinessService.Controllers
         {
             try
             {
+                string logName = HttpContext.Session.GetString("Username");
+
                 var request = new RestRequest($"Profile/delete/{username}", Method.Post);
                 var response = await _client.ExecuteAsync(request);
                 _logger.LogInformation($"Deleting profile for username: {username}");
 
                 string details = $"Admin deleted profile: {username}";
-                await _logController.LogAction("Admin", $"Profile Delete: {username}", details);
+                await _logController.LogAction(logName, $"Profile Delete: {username}", details);
 
                 return Ok(response.Content);
             }
