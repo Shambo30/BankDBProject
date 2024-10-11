@@ -1,6 +1,9 @@
 ﻿// function that runs when selecting a user account from the profile table
 function selectUserAccounts(username) {
 
+    let button = $('#addAccount');
+    button.html(`<button class="btn btn-primary" id="addAccount" onClick="addAccount('${username}')">Add New Account</button>`);
+
     $.ajax({
         url: `/api/BAccount/retrieveByUsername/${username}`,
         method: 'GET',
@@ -8,16 +11,13 @@ function selectUserAccounts(username) {
             console.log(data.responseText);
             // select the table data
             let accountTable = $('#accountTable tbody');
-            let button = $('#addAccount');
             // Clear all existing table rows
             accountTable.empty();
-
             // if null, empty or undefined...
             if (!data || data === undefined || data.length === 0) {
                 accountTable.html(`<tr><td colspan="3" class="text-center">No accounts found for ${username}</td></tr>`);
             }
             else {
-                button.html(`<button class="btn btn-primary" id="addAccount" onClick="addAccount('${username}')">Add New Account</button>`);
                 data.forEach(account => {
                     // Append rows to the account summary table
                     accountTable.append(`
