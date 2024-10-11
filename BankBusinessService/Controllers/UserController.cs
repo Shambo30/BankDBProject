@@ -32,21 +32,32 @@ namespace BankBusinessService.Controllers
                 return RedirectToAction("UserLogin", "Login"); // Redirect to login if not found
             }
 
-            // Fetch the user profile and account details from the business layer
+            // Fetch the user profile from the database using the BProfileController
             var profileResponse = await _bProfileController.RetrieveProfileByUsername(username);
-            var accountResponse = await _bAccountController.GetAccountsByUsername(username);
-
-            var userProfile = (profileResponse is OkObjectResult profileResult && profileResult.Value is Profile profile) ? profile : null;
-            var userAccounts = (accountResponse is OkObjectResult accountResult && accountResult.Value is List<Account> accounts) ? accounts : new List<Account>();
-
-            // Create a ViewModel to pass data to the view
-            var dashboardViewModel = new DashboardViewModel
+            if (profileResponse is OkObjectResult profileResult && profileResult.Value is Profile profile)
             {
-                UserProfile = userProfile,
-                UserAccounts = userAccounts
-            };
+                // Check if the profile retrieved is the admin profile
+                if (profile.Username.Equals("admin", StringComparison.OrdinalIgnoreCase))
+                {
+                    return RedirectToAction("AccessDenied", "Account"); // Redirect if the admin tries to access the user dashboard
+                }
 
-            return View(dashboardViewModel);
+                // Fetch the user's account details
+                var accountResponse = await _bAccountController.GetAccountsByUsername(username);
+                var userAccounts = (accountResponse is OkObjectResult accountResult && accountResult.Value is List<Account> accounts) ? accounts : new List<Account>();
+
+                // Create a ViewModel to pass data to the view
+                var dashboardViewModel = new DashboardViewModel
+                {
+                    UserProfile = profile,
+                    UserAccounts = userAccounts
+                };
+
+                return View(dashboardViewModel);
+            }
+
+            // If no profile is found or if an error occurs, redirect to login
+            return RedirectToAction("UserLogin", "Login");
         }
 
         //Allows for updating of user data after any transaction
