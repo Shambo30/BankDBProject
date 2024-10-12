@@ -2,6 +2,7 @@
 using RestSharp;
 using Newtonsoft.Json;
 using BankBusinessService.Models;
+using BankBusinessService.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -9,10 +10,12 @@ public class BAccountController : Controller
 {
     private readonly RestClient _client = new RestClient("http://localhost:5282/api");
     private readonly ILogger<BAccountController> _logger;
+    private readonly BLogController _logController;
 
-    public BAccountController(ILogger<BAccountController> logger)
+    public BAccountController(ILogger<BAccountController> logger, BLogController logController)
     {
         _logger = logger;
+        _logController = logController;
     }
 
     [HttpPost("create")]
@@ -25,6 +28,10 @@ public class BAccountController : Controller
 
             var response = await _client.ExecuteAsync(request);
             _logger.LogInformation($"Creating account for username: {account.holder_username} with initial balance: {account.balance}");
+
+            string details = $"Admin creating account for: {account.holder_username}";
+            await _logController.LogAction("Admin", "Account Create", details);
+
             return Ok(response.Content);
         }
         catch (Exception ex)
@@ -68,6 +75,7 @@ public class BAccountController : Controller
     {
         try
         {
+
             // Create a request to call the AccountController in your data layer web service
             var request = new RestRequest($"account/retrieveByUsername/{username}", Method.Get);
             var response = await _client.ExecuteAsync(request);
@@ -77,6 +85,7 @@ public class BAccountController : Controller
                 // Deserialize the response into a list of accounts
                 var accounts = JsonConvert.DeserializeObject<List<Account>>(response.Content);
                 _logger.LogInformation($"Successfully retrieved {accounts.Count} accounts for username: {username}");
+
                 return Ok(accounts);
             }
             else
@@ -120,6 +129,9 @@ public class BAccountController : Controller
             var request = new RestRequest($"Account/delete/{accountId}", Method.Post);
             var response = await _client.ExecuteAsync(request);
             _logger.LogInformation($"Deleting account with account number: {accountId}");
+
+            string details = $"Admin deleted account {accountId}";
+            await _logController.LogAction("Admin", "Account Delete", details);
 
             return Ok(response.Content);
         }

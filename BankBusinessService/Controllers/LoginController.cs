@@ -7,12 +7,14 @@ namespace BankBusinessService.Controllers
     {
         private readonly BProfileController _bProfileController;
         private readonly BAccountController _bAccountController;
+        private readonly BLogController _logController;
 
         // Dependency Injection to get BProfileController
-        public LoginController(BProfileController bProfileController, BAccountController bAccountController)
+        public LoginController(BProfileController bProfileController, BAccountController bAccountController, BLogController logController)
         {
             _bProfileController = bProfileController;
             _bAccountController = bAccountController;
+            _logController = logController;
         }
 
         public IActionResult UserLogin()
@@ -55,6 +57,9 @@ namespace BankBusinessService.Controllers
                             Secure = true, // Ensures the cookie is only sent over HTTPS
                             SameSite = SameSiteMode.Strict // Protects against CSRF attacks
                         });
+
+                        string details = $"Admin logged in";
+                        await _logController.LogAction(username, "Admin Login", details);
 
                         // Redirect to UserController's Dashboard with all necessary data in session
                         return RedirectToAction("Dashboard", "Admin");
@@ -114,6 +119,8 @@ namespace BankBusinessService.Controllers
                             Secure = true, // Ensures the cookie is only sent over HTTPS
                             SameSite = SameSiteMode.Strict // Protects against CSRF attacks
                         });
+                        string details = $"User: {username} logged in";
+                        await _logController.LogAction(username, "User Login", details);
 
                         // Redirect to UserController's Dashboard with all necessary data in session
                         return RedirectToAction("Dashboard", "User");
@@ -143,15 +150,25 @@ namespace BankBusinessService.Controllers
         }
 
         [HttpPost]
-        public IActionResult UserLogout()
+        public async Task<IActionResult> UserLogout()
         {
+            string username = HttpContext.Session.GetString("Username");
+
+            string details = $"User: {username} logged out";
+            await _logController.LogAction(username, "User Log out", details);
+
             HttpContext.Session.Clear(); // Clear the session
             return RedirectToAction("UserLogin", "Login");
         }
 
         [HttpPost]
-        public IActionResult AdminLogout()
+        public async Task<IActionResult> AdminLogout()
         {
+            string username = HttpContext?.Session?.GetString("Username");
+
+            string details = $"Admin logged out";
+            await _logController.LogAction(username, "User Log out", details);
+
             HttpContext.Session.Clear(); // Clear the session
             return RedirectToAction("AdminLogin", "Login");
         }

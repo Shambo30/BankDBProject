@@ -15,24 +15,39 @@ namespace BankBusinessService.Controllers
         public async Task<IActionResult> Dashboard()
         {
             // Retrieve username from session
-            string username = HttpContext.Session.GetString("Username");
+            string username = HttpContext?.Session?.GetString("Username");
             if (string.IsNullOrEmpty(username))
             {
-                return RedirectToAction("UserLogin", "Login");
+                return RedirectToAction("AdminLogin", "Login");
             }
 
-            // Fetch the user profile and account details from the business layer
-            var profileResponse = await _bProfileController.RetrieveProfileByUsername(username);
-
-            var userProfile = (profileResponse is OkObjectResult profileResult && profileResult.Value is Profile profile) ? profile : null;
-
-            // Create a ViewModel to pass data to the view
-            var dashboardViewModel = new DashboardViewModel
+            // Check for cookies unique Session ID
+            if (!HttpContext.Request.Cookies.ContainsKey("SessionID"))
             {
-                UserProfile = userProfile
-            };
+                return RedirectToAction("AdminLogin", "Login"); // Redirect to login if not found
+            }
 
-            return View(dashboardViewModel);
+            // Fetch the user profile from the database using the BProfileController
+            var profileResponse = await _bProfileController.RetrieveProfileByUsername(username);
+            if (profileResponse is OkObjectResult profileResult && profileResult.Value is Profile profile)
+            {
+                // Check if the profile retrieved is the admin profile
+                if (!profile.Username.Equals("admin", StringComparison.OrdinalIgnoreCase))
+                {
+                    return RedirectToAction("AccessDenied", "Account"); // Redirect if the user is not the admin
+                }
+
+                // Create a ViewModel to pass data to the view
+                var dashboardViewModel = new DashboardViewModel
+                {
+                    UserProfile = profile
+                };
+
+                return View(dashboardViewModel);
+            }
+
+            // If no profile is found or if an error occurs, redirect to login
+            return RedirectToAction("AdminLogin", "Login");
         }
     }
 }
