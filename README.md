@@ -1,5 +1,5 @@
 A bank data web service in ASP.NET MVC Core that uses SQLite to store data locally.
-Created in collaboration with @Shambo30
+Created in collaboration with @mdickson05
 ## Profiles
 Use this JSON to test profile CRUD operations:
 ```
